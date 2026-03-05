@@ -19,7 +19,9 @@ return new class extends Migration
             $table->timestamp('expires_at')
                 ->nullable();
             $table->foreignId('created_by_user_id')
-                ->references('id');
+                ->references('id')
+                ->on('users')
+                ->cascadeOnDelete();
             $table->timestamps();
             $table->index(['abuse_id', 'epoch']);
         });
