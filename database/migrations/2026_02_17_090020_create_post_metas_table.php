@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('post_metas', function (Blueprint $table) {
-            $table->foreignId('post_id')
-                ->primary()
-                ->constrained('posts')
-                ->cascadeOnDelete();
+            $table->unsignedBigInteger('post_id')->primary();
 
             $table->string('abuse_id', 64);
             $table->string('epoch', 16);
