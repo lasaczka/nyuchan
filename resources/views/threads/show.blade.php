@@ -1,0 +1,167 @@
+<x-app-layout>
+    @php
+        $showModTools = session('show_mod_tools', true);
+    @endphp
+    <x-slot name="header">
+        <h2>/{{ $board->slug }}/ {{ $thread->title }}</h2>
+    </x-slot>
+
+    <div class="stack">
+        @if(session('status'))
+            <div class="notice">{{ session('status') }}</div>
+        @endif
+
+        @if(auth()->user()?->canModeratePosts() && $showModTools)
+            <div class="card mod-thread-actions">
+                <form method="POST" action="{{ route('mod.thread.delete', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="mod-inline mod-inline-combined">
+                    @csrf
+                    <input type="text" name="reason" placeholder="{{ __('ui.reason_optional') }}">
+                    @if(auth()->user()?->canBanUsers())
+                        <input type="number" name="minutes" min="5" max="43200" value="60" required>
+                        <button type="submit" class="danger">{{ __('ui.delete_thread') }}</button>
+                        <button type="submit" class="danger" formaction="{{ route('mod.thread.ban_author', ['board' => $board->slug, 'thread' => $thread->id]) }}">{{ __('ui.ban_thread_author') }}</button>
+                    @else
+                        <button type="submit" class="danger">{{ __('ui.delete_thread') }}</button>
+                    @endif
+                </form>
+            </div>
+        @endif
+
+        <div class="card" id="post-form">
+            <h3>{{ __('ui.reply') }}</h3>
+            <form method="POST" action="{{ route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="stack" enctype="multipart/form-data">
+                @csrf
+                <div>
+                    <label class="row" style="gap:.45rem; align-items:center;">
+                        <input type="checkbox" name="use_display_name" value="1" style="width:auto;" {{ old('use_display_name') ? 'checked' : '' }}>
+                        <span>{{ __('ui.post_with_name') }}</span>
+                    </label>
+                    @error('use_display_name')<div class="error">{{ $message }}</div>@enderror
+                </div>
+                <div>
+                    <label class="row" style="gap:.45rem; align-items:center;">
+                        <input type="checkbox" name="sage" value="1" style="width:auto;" {{ old('sage') ? 'checked' : '' }}>
+                        <span>{{ __('ui.sage') }}</span>
+                    </label>
+                    @error('sage')<div class="error">{{ $message }}</div>@enderror
+                </div>
+                <div>
+                    <label for="images">{{ __('ui.image_optional') }}</label>
+                    <input id="images" name="images[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                    <div class="muted format-help">{{ __('ui.image_policy') }}</div>
+                    @error('images')<div class="error">{{ $message }}</div>@enderror
+                    @if($errors->has('images.*'))<div class="error">{{ $errors->first('images.*') }}</div>@endif
+                </div>
+                <div>
+                    <label for="body">{{ __('ui.message') }}</label>
+                    <textarea id="body" name="body" required>{{ old('body', $quotePostId ? ('>>'.$quotePostId."\n") : '') }}</textarea>
+                    <div class="muted format-help">{{ __('ui.format_help') }}</div>
+                    @error('body')<div class="error">{{ $message }}</div>@enderror
+                </div>
+                <button type="submit">{{ __('ui.post_reply') }}</button>
+            </form>
+        </div>
+
+        <div class="card">
+            @php
+                $postsCount = $posts->count();
+                $locale = app()->getLocale();
+
+                if (in_array($locale, ['ru', 'be'], true)) {
+                    $n = $postsCount % 100;
+                    $n1 = $postsCount % 10;
+
+                    if ($n > 10 && $n < 20) {
+                        $postWord = __('ui.post_many');
+                    } elseif ($n1 === 1) {
+                        $postWord = __('ui.post_one');
+                    } elseif ($n1 >= 2 && $n1 <= 4) {
+                        $postWord = __('ui.post_few');
+                    } else {
+                        $postWord = __('ui.post_many');
+                    }
+                } else {
+                    $postWord = $postsCount === 1 ? __('ui.post_one') : __('ui.post_many');
+                }
+            @endphp
+            <h3>{{ $postsCount }} {{ $postWord }}</h3>
+            <ul class="list">
+                @foreach($posts as $post)
+                    <li id="p{{ $post->id }}" class="thread-post {{ $loop->first ? 'op-preview' : '' }} {{ $post->is_deleted ? 'mod-deleted' : '' }}">
+                        <div class="post-meta">
+                            <a class="post-no" href="#p{{ $post->id }}">#{{ $post->id }}</a>
+                            <span>{{ __('ui.by') }}</span>
+                            <span class="post-author" @if($post->display_name && $post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: __('ui.anonymous') }}</span>
+                            @if($loop->first)
+                                <span>({{ __('ui.op_short') }})</span>
+                            @endif
+                            <a class="post-reply" href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $thread->id, 'quote' => $post->id]) }}#post-form" title="{{ __('ui.reply') }}">➤</a>
+                            @if($post->is_sage)
+                                <span class="post-sage">{{ __('ui.sage') }}</span>
+                            @endif
+                        </div>
+                        <div class="thread-post-layout">
+                            @if($post->attachments->isNotEmpty() && ! $post->is_deleted)
+                                @php
+                                    $attachmentsCount = min($post->attachments->count(), 4);
+                                @endphp
+                                <div class="attachments-grid attachments-count-{{ $attachmentsCount }}">
+                                    @foreach($post->attachments as $attachment)
+                                        @php
+                                            $fileName = $attachment->original_name ?: ('image-'.$attachment->id.'.jpg');
+                                        @endphp
+                                        <div class="attachment-block">
+                                            <a class="attachment-link" href="{{ route('media.file', ['attachment' => $attachment->id, 'filename' => $fileName]) }}" target="_blank" rel="noopener" title="{{ $attachment->original_name ?: 'image' }}">
+                                                <img class="post-image" src="{{ route('media.file', ['attachment' => $attachment->id, 'filename' => $fileName, 'variant' => 'thumb']) }}" alt="{{ $attachment->original_name ?: 'image' }}" loading="lazy">
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <div class="post-main">
+                                @if($post->is_deleted)
+                                    <div class="post-body mod-deleted-note">{{ __('ui.deleted_post') }}</div>
+                                    @if($post->delete_reason)
+                                        <div class="post-body muted deleted-reason">{{ __('ui.deleted_reason', ['reason' => $post->delete_reason]) }}</div>
+                                    @endif
+                                @else
+                                    <div class="post-body">{!! $post->rendered_body !!}</div>
+                                @endif
+
+                                @if(auth()->user()?->canModeratePosts() && $showModTools)
+                                    <div class="mod-actions mod-actions-inline">
+                                        @if(! $post->is_deleted)
+                                            <form method="POST" action="{{ route('mod.post.delete', ['board' => $board->slug, 'thread' => $thread->id, 'post' => $post->id]) }}" class="mod-inline mod-inline-combined">
+                                                @csrf
+                                                <input type="text" name="reason" placeholder="{{ __('ui.reason_optional') }}">
+                                                @if(auth()->user()?->canBanUsers())
+                                                    <input type="number" name="minutes" min="5" max="43200" value="60" required>
+                                                    <button type="submit" class="danger">{{ __('ui.delete_post') }}</button>
+                                                    <button type="submit" class="danger" formaction="{{ route('mod.post.ban', ['board' => $board->slug, 'thread' => $thread->id, 'post' => $post->id]) }}">{{ __('ui.ban_author') }}</button>
+                                                @else
+                                                    <button type="submit" class="danger">{{ __('ui.delete_post') }}</button>
+                                                @endif
+                                            </form>
+                                        @elseif(auth()->user()?->canBanUsers())
+                                            <form method="POST" action="{{ route('mod.post.ban', ['board' => $board->slug, 'thread' => $thread->id, 'post' => $post->id]) }}" class="mod-inline mod-inline-combined">
+                                                @csrf
+                                                <input type="text" name="reason" placeholder="{{ __('ui.ban_reason') }}" required>
+                                                <input type="number" name="minutes" min="5" max="43200" value="60" required>
+                                                <button type="submit" class="danger">{{ __('ui.ban_author') }}</button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+
+        <div class="card panel" style="text-align:center;">
+            <a class="button" href="#post-form">{{ __('ui.post_reply_go_form') }}</a>
+        </div>
+    </div>
+</x-app-layout>
