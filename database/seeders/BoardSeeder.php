@@ -16,6 +16,7 @@ class BoardSeeder extends Seeder
                 'is_hidden' => false,
                 'description' => 'Anime and manga',
                 'default_anon_name' => 'Anon',
+                'thread_limit' => 100,
                 'bump_limit' => 250,
             ],
             [
@@ -24,6 +25,7 @@ class BoardSeeder extends Seeder
                 'is_hidden' => false,
                 'description' => 'Random board',
                 'default_anon_name' => 'Anonymous',
+                'thread_limit' => 100,
                 'bump_limit' => 300,
             ],
             [
@@ -32,6 +34,7 @@ class BoardSeeder extends Seeder
                 'is_hidden' => true,
                 'description' => 'Hidden random board',
                 'default_anon_name' => 'Invisible',
+                'thread_limit' => 100,
                 'bump_limit' => 300,
             ],
             [
@@ -40,6 +43,7 @@ class BoardSeeder extends Seeder
                 'is_hidden' => false,
                 'description' => 'Adult content',
                 'default_anon_name' => 'Nameless',
+                'thread_limit' => 100,
                 'bump_limit' => 200,
             ],
             [
@@ -48,6 +52,7 @@ class BoardSeeder extends Seeder
                 'is_hidden' => false,
                 'description' => 'Refuge board',
                 'default_anon_name' => 'Refugee',
+                'thread_limit' => 100,
                 'bump_limit' => 250,
             ],
         ];

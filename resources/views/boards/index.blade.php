@@ -23,6 +23,10 @@
                 <form method="POST" action="{{ route('mod.board.settings', ['board' => $board->slug]) }}" class="grid-2">
                     @csrf
                     <div>
+                        <label for="thread_limit">{{ __('ui.thread_limit') }}</label>
+                        <input id="thread_limit" name="thread_limit" type="number" min="10" max="5000" value="{{ old('thread_limit', (int) ($board->thread_limit ?? 100)) }}" required>
+                    </div>
+                    <div>
                         <label for="bump_limit">{{ __('ui.bump_limit') }}</label>
                         <input id="bump_limit" name="bump_limit" type="number" min="10" max="1000" value="{{ old('bump_limit', (int) $board->bump_limit) }}" required>
                     </div>

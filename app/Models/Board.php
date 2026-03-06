@@ -15,6 +15,7 @@ class Board extends Model
         'is_hidden',
         'description',
         'default_anon_name',
+        'thread_limit',
         'bump_limit',
         'post_rate_limit_count',
         'post_rate_limit_window_seconds',

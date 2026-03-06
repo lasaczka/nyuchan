@@ -92,7 +92,7 @@
                             <a class="post-no" href="#p{{ $post->id }}">#{{ $post->id }}</a>
                             <span>{{ __('ui.by') }}</span>
                             <span class="post-author" @if($post->display_name && $post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: __('ui.anonymous') }}</span>
-                            @if($loop->first)
+                            @if($post->is_op_in_thread ?? false)
                                 <span>({{ __('ui.op_short') }})</span>
                             @endif
                             <a class="post-reply" href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $thread->id, 'quote' => $post->id]) }}#post-form" title="{{ __('ui.reply') }}">➤</a>

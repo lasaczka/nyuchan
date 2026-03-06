@@ -29,12 +29,24 @@ Route::get('/', function () {
         ->orderBy('slug')
         ->get();
 
+    $hiddenBoards = Board::query()
+        ->where('is_hidden', true)
+        ->withCount(['threads', 'posts'])
+        ->withCount([
+            'posts as posts_last_24h' => function ($query) {
+                $query->where('posts.created_at', '>=', now()->subDay());
+            },
+        ])
+        ->withMax('posts as last_post_at', 'created_at')
+        ->get();
+
     $boardStats = $boards->map(function (Board $board) {
         $postsLast24h = (int) ($board->posts_last_24h ?? 0);
 
         return [
             'slug' => $board->slug,
             'title' => $board->display_title,
+            'is_hidden_aggregate' => false,
             'threads_count' => (int) $board->threads_count,
             'posts_count' => (int) $board->posts_count,
             'last_post_at' => $board->last_post_at,
@@ -43,6 +55,20 @@ Route::get('/', function () {
             'last_thread_title' => $board->latestBumpedThread?->title,
         ];
     });
+
+    if ($hiddenBoards->isNotEmpty()) {
+        $boardStats->push([
+            'slug' => null,
+            'title' => __('ui.hidden_boards_total'),
+            'is_hidden_aggregate' => true,
+            'threads_count' => (int) $hiddenBoards->sum('threads_count'),
+            'posts_count' => (int) $hiddenBoards->sum('posts_count'),
+            'last_post_at' => $hiddenBoards->pluck('last_post_at')->filter()->max(),
+            'posts_last_24h' => (int) $hiddenBoards->sum('posts_last_24h'),
+            'last_thread_id' => null,
+            'last_thread_title' => null,
+        ]);
+    }
 
     return view('welcome', [
         'boardStats' => $boardStats,

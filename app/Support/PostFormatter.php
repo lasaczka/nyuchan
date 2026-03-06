@@ -55,8 +55,12 @@ class PostFormatter
             }
 
             $target = ! empty($resolved['new_tab']) ? ' target="_blank" rel="noopener"' : '';
+            $suffix = '';
+            if (! empty($resolved['label'])) {
+                $suffix = ' ('.e((string) $resolved['label']).')';
+            }
 
-            return '<a class="post-quote-link" href="'.e((string) $resolved['href']).'"'.$target.'>&gt;&gt;'.$postId.'</a>';
+            return '<a class="post-quote-link" href="'.e((string) $resolved['href']).'"'.$target.'>&gt;&gt;'.$postId.$suffix.'</a>';
         }, $line) ?? $line;
 
         $rules = [

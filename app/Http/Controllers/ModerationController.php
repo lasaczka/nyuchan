@@ -18,6 +18,7 @@ class ModerationController extends Controller
         abort_unless($user && $user->canBanUsers(), 403);
 
         $data = $request->validate([
+            'thread_limit' => ['required', 'integer', 'min:10', 'max:5000'],
             'bump_limit' => ['required', 'integer', 'min:10', 'max:1000'],
             'post_rate_limit_count' => ['required', 'integer', 'min:1', 'max:30'],
             'post_rate_limit_window_seconds' => ['required', 'integer', 'min:5', 'max:3600'],

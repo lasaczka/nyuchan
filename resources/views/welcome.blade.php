@@ -34,7 +34,13 @@
             <tbody>
             @forelse($boardStats as $stat)
                 <tr>
-                    <td><a href="{{ route('boards.show', ['board' => $stat['slug']]) }}">/{{ $stat['slug'] }}/ - {{ $stat['title'] }}</a></td>
+                    <td>
+                        @if(! empty($stat['is_hidden_aggregate']))
+                            {{ $stat['title'] }}
+                        @else
+                            <a href="{{ route('boards.show', ['board' => $stat['slug']]) }}">/{{ $stat['slug'] }}/ - {{ $stat['title'] }}</a>
+                        @endif
+                    </td>
                     <td>{{ $stat['threads_count'] }}</td>
                     <td>{{ $stat['posts_count'] }}</td>
                     <td>
@@ -46,7 +52,9 @@
                     </td>
                     <td>{{ $stat['posts_last_24h'] }}</td>
                     <td>
-                        @if($stat['last_thread_id'])
+                        @if(! empty($stat['is_hidden_aggregate']))
+                            -
+                        @elseif($stat['last_thread_id'])
                             <a href="{{ route('threads.show', ['board' => $stat['slug'], 'thread' => $stat['last_thread_id']]) }}">
                                 #{{ $stat['last_thread_id'] }}@auth - {{ $stat['last_thread_title'] }}@endauth
                             </a>

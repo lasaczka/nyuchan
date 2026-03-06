@@ -32,12 +32,16 @@ class ThreadController extends Controller
             ->with(['attachments', 'meta'])
             ->orderBy('id')
             ->get();
+        $opPostId = $posts->first()?->id;
+        $opAbuseId = $posts->first()?->meta?->abuse_id;
 
         $quoteLinks = $this->buildQuoteLinks(PostFormatter::extractQuoteIds($posts->pluck('body')->all()));
         $deleteReasons = $this->loadDeleteReasons($posts->where('is_deleted', true)->pluck('id')->all());
 
-        $posts->each(function (Post $post) use ($quoteLinks, $thread, $deleteReasons): void {
+        $posts->each(function (Post $post) use ($quoteLinks, $thread, $deleteReasons, $opPostId, $opAbuseId): void {
             $post->delete_reason = $deleteReasons[$post->id] ?? null;
+            $post->is_op_in_thread = ($opAbuseId !== null && $post->meta?->abuse_id === $opAbuseId)
+                || ((int) $post->id === (int) $opPostId);
 
             if ($post->is_deleted) {
                 $post->rendered_body = '';
@@ -47,16 +51,19 @@ class ThreadController extends Controller
 
             $post->rendered_body = PostFormatter::format(
                 $post->body,
-                function (int $postId) use ($quoteLinks, $thread): ?array {
+                function (int $postId) use ($quoteLinks, $thread, $opPostId): ?array {
                     $target = $quoteLinks[$postId] ?? null;
 
                     if (! $target) {
                         return null;
                     }
 
+                    $isOpQuote = $opPostId !== null && $postId === (int) $opPostId;
+
                     return [
                         'href' => $target['href'],
                         'new_tab' => (int) $target['thread_id'] !== (int) $thread->id,
+                        'label' => $isOpQuote ? __('ui.op_short') : null,
                     ];
                 }
             );
@@ -141,6 +148,8 @@ class ThreadController extends Controller
                     'Lax'
                 )
             );
+
+            $this->enforceThreadLimit($board, $thread->id);
 
             return redirect()->route('threads.show', [
                 'board' => $board->slug,
@@ -280,5 +289,31 @@ class ThreadController extends Controller
         }
 
         return rtrim(rtrim(number_format($bytes / 1024, 2, '.', ''), '0'), '.').' KB';
+    }
+
+    private function enforceThreadLimit(Board $board, int $newThreadId): void
+    {
+        $threadLimit = max(1, (int) ($board->thread_limit ?? 100));
+        $totalThreads = Thread::query()
+            ->where('board_id', $board->id)
+            ->count();
+
+        $overflow = $totalThreads - $threadLimit;
+        if ($overflow <= 0) {
+            return;
+        }
+
+        $idsToDelete = Thread::query()
+            ->where('board_id', $board->id)
+            ->where('id', '!=', $newThreadId)
+            ->orderBy('bumped_at')
+            ->orderBy('id')
+            ->limit($overflow)
+            ->pluck('id')
+            ->all();
+
+        if ($idsToDelete !== []) {
+            Thread::query()->whereIn('id', $idsToDelete)->delete();
+        }
     }
 }
