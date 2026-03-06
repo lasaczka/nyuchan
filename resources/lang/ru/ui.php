@@ -32,10 +32,13 @@ return [
     'continue' => 'Продолжить',
 
     'theme' => 'Тема',
-    'theme_sugar' => 'Sugar',
+    'theme_sugar' => 'Satou',
     'theme_makaba' => 'Makaba',
     'theme_rel' => 'Re-l',
     'theme_nyu' => 'Nyu',
+    'theme_futaba' => 'Futaba',
+    'theme_yotsuba' => 'Yotsuba',
+    'theme_lelouch' => 'Lelouch',
 
     'language' => 'Язык',
     'lang_be' => 'Бел',
@@ -54,7 +57,7 @@ return [
     'rules_figure_alt' => 'Nyu на земле, сцена из Elfen Lied',
     'rules_figure_caption' => 'Не обижайте Ню!',
 
-    'closed_imageboard' => 'Твоё последнее пристанище',
+    'closed_imageboard' => 'Твоё последнее пристанище.',
     'total_threads' => 'Всего тредов',
     'total_posts' => 'Всего постов',
     'board_stats' => 'Статистика досок',
@@ -69,6 +72,8 @@ return [
     'posts_24h' => 'Постов за 24ч',
     'last_thread' => 'Последний тред',
     'no_last_thread' => 'нет',
+    'no_last_thread_hidden' => 'скрыто',
+    'hidden_boards_total' => 'Скрытые доски',
     'never' => 'никогда',
     'no_boards' => 'Досок пока нет.',
 
@@ -105,6 +110,7 @@ return [
     'details_for_auth' => 'Подробно для авторизованного пользователя',
 
     'board_settings' => 'Настройки доски',
+    'thread_limit' => 'Лимит тредов',
     'bump_limit' => 'Бамп-лимит',
     'rate_limit_count' => 'Макс. постов в окне',
     'rate_limit_window_seconds' => 'Размер окна (сек)',

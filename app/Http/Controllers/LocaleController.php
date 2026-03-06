@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class LocaleController extends Controller
 {
     private const LOCALES = ['be', 'ru', 'en'];
-    private const THEMES = ['sugar', 'makaba', 're-l', 'nyu'];
+    private const THEMES = ['sugar', 'makaba', 're-l', 'nyu', 'futaba', 'yotsuba', 'lelouch'];
 
     public function set(Request $request): RedirectResponse
     {

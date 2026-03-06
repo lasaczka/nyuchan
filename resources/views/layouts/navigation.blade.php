@@ -30,6 +30,9 @@
                     <option value="makaba" {{ $theme === 'makaba' ? 'selected' : '' }}>{{ __('ui.theme_makaba') }}</option>
                     <option value="re-l" {{ $theme === 're-l' ? 'selected' : '' }}>{{ __('ui.theme_rel') }}</option>
                     <option value="nyu" {{ $theme === 'nyu' ? 'selected' : '' }}>{{ __('ui.theme_nyu') }}</option>
+                    <option value="futaba" {{ $theme === 'futaba' ? 'selected' : '' }}>{{ __('ui.theme_futaba') }}</option>
+                    <option value="yotsuba" {{ $theme === 'yotsuba' ? 'selected' : '' }}>{{ __('ui.theme_yotsuba') }}</option>
+                    <option value="lelouch" {{ $theme === 'lelouch' ? 'selected' : '' }}>{{ __('ui.theme_lelouch') }}</option>
                 </select>
             </label>
 

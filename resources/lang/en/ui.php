@@ -32,10 +32,13 @@ return [
     'continue' => 'Continue',
 
     'theme' => 'Theme',
-    'theme_sugar' => 'Sugar',
+    'theme_sugar' => 'Satou',
     'theme_makaba' => 'Makaba',
     'theme_rel' => 'Re-l',
     'theme_nyu' => 'Nyu',
+    'theme_futaba' => 'Futaba',
+    'theme_yotsuba' => 'Yotsuba',
+    'theme_lelouch' => 'Lelouch',
 
     'language' => 'Language',
     'lang_be' => 'Bel',
@@ -69,6 +72,8 @@ return [
     'posts_24h' => 'Posts in 24h',
     'last_thread' => 'Last thread',
     'no_last_thread' => 'none',
+    'no_last_thread_hidden' => 'hidden',
+    'hidden_boards_total' => 'Hidden boards',
     'never' => 'never',
     'no_boards' => 'No boards yet.',
 
@@ -105,6 +110,7 @@ return [
     'details_for_auth' => 'Detailed view for authenticated user',
 
     'board_settings' => 'Board settings',
+    'thread_limit' => 'Thread limit',
     'bump_limit' => 'Bump limit',
     'rate_limit_count' => 'Max posts in window',
     'rate_limit_window_seconds' => 'Window size (sec)',

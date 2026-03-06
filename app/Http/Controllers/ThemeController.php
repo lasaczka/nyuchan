@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class ThemeController extends Controller
 {
-    private const THEMES = ['sugar', 'makaba', 're-l', 'nyu'];
+    private const THEMES = ['sugar', 'makaba', 're-l', 'nyu', 'futaba', 'yotsuba', 'lelouch'];
 
     public function set(Request $request, string $theme): RedirectResponse
     {

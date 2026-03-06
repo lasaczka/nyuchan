@@ -9,6 +9,10 @@
   --accent-2: #ffb3d6;
   --danger: #d0005f;
   --code-bg: #f8e4f1;
+  --post-no-color: var(--accent);
+  --post-author-color: var(--text);
+  --post-bg: transparent;
+  --font-main: 'Segoe UI', Tahoma, sans-serif;
 }
 
 html[data-theme='makaba'] {
@@ -50,10 +54,62 @@ html[data-theme='nyu'] {
   --code-bg: #281f2d;
 }
 
+html[data-theme='futaba'] {
+  --bg: #f0f0e0;
+  --panel: #f0e0d6;
+  --panel-2: #f8ece5;
+  --text: #2b1a1a;
+  --muted: #7f5858;
+  --line: #c8b9ac;
+  --accent: #0000ee;
+  --accent-2: #ddb8a3;
+  --danger: #b3261e;
+  --code-bg: #efe4d8;
+  --post-no-color: #b11b1b;
+  --post-author-color: #117743;
+  --post-bg: #f7e8de;
+  --font-main: Tahoma, Verdana, Arial, sans-serif;
+}
+
+html[data-theme='yotsuba'] {
+  --bg: #eef2ff;
+  --panel: #d6daf0;
+  --panel-2: #dbe1f7;
+  --text: #000;
+  --muted: #5c6a99;
+  --line: #b7c5d9;
+  --accent: #34345c;
+  --accent-2: #b7c5d9;
+  --danger: #d00;
+  --code-bg: #cdd8ee;
+  --post-no-color: #000;
+  --post-author-color: #117743;
+  --post-bg: #d6daf0;
+  --font-main: Arial, Helvetica, sans-serif;
+}
+
+html[data-theme='lelouch'] {
+  --bg: #0a0d18;
+  --panel: #12162a;
+  --panel-2: #1a1f35;
+  --text: #e7e9f5;
+  --muted: #9aa3c7;
+  --line: #2b3252;
+  --accent: #b89a56;
+  --accent-2: #5f4a86;
+  --danger: #d64a5e;
+  --code-bg: #1a2038;
+  --post-no-color: #f05a74;
+  --post-author-color: #d5c18a;
+  --post-bg: #141a2d;
+  --font-main: 'Segoe UI', Tahoma, sans-serif;
+}
+
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-family: var(--font-main);
   background: var(--bg);
   color: var(--text);
   line-height: 1.45;
@@ -104,10 +160,10 @@ code { background: var(--code-bg); padding: .15rem .35rem; border-radius: 4px; }
 }
 .post-no {
   font-weight: 700;
-  color: var(--accent);
+  color: var(--post-no-color);
 }
 .post-author {
-  color: var(--text);
+  color: var(--post-author-color);
   font-weight: 600;
 }
 .post-sage {
@@ -364,6 +420,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
 .list > li {
   border-top: 1px solid var(--line);
   padding: .75rem 0;
+  background: var(--post-bg);
 }
 .list > li:first-child { border-top: 0; }
 
@@ -780,4 +837,289 @@ input[type='radio'] {
   margin-top: .5rem;
   font-size: .92rem;
 }
+
+/* Futaba-specific look tuned to 2chan-like visuals. */
+html[data-theme='futaba'] body {
+  font-size: 15px;
+  line-height: 1.35;
+}
+html[data-theme='futaba'] a {
+  text-decoration: underline;
+}
+html[data-theme='futaba'] .card,
+html[data-theme='futaba'] .op-preview,
+html[data-theme='futaba'] .mod-deleted,
+html[data-theme='futaba'] .notice,
+html[data-theme='futaba'] button,
+html[data-theme='futaba'] .button,
+html[data-theme='futaba'] input,
+html[data-theme='futaba'] textarea,
+html[data-theme='futaba'] select {
+  border-radius: 0;
+}
+html[data-theme='futaba'] .card {
+  border-color: #c4b2a6;
+  background: #f8f8ee;
+}
+html[data-theme='futaba'] .topbar,
+html[data-theme='futaba'] .board-nav {
+  background: #f0f0e0;
+}
+html[data-theme='futaba'] .brand-logo,
+html[data-theme='futaba'] h1,
+html[data-theme='futaba'] h2,
+html[data-theme='futaba'] h3 {
+  color: #a00000;
+}
+html[data-theme='futaba'] .thread-card {
+  border-left-color: #e7b79c;
+}
+html[data-theme='futaba'] .list > li {
+  background: #f7e9df;
+}
+html[data-theme='futaba'] .post-link,
+html[data-theme='futaba'] .post-reply {
+  color: #0000ee;
+}
+html[data-theme='futaba'] .post-quote-link {
+  color: #d00000;
+}
+html[data-theme='futaba'] button,
+html[data-theme='futaba'] .button {
+  background: #e8e8e8;
+  color: #111;
+  border: 1px solid #8f8f8f;
+}
+html[data-theme='futaba'] button.secondary,
+html[data-theme='futaba'] .button.secondary {
+  background: #f4f4f4;
+}
+html[data-theme='futaba'] button.danger,
+html[data-theme='futaba'] .button.danger {
+  background: #c74b3b;
+  color: #fff;
+  border-color: #9f2f24;
+}
+html[data-theme='futaba'] .post-sage,
+html[data-theme='futaba'] .mod-deleted-note {
+  color: #b40000 !important;
+}
+
+/* Makaba refresh: closer to 2ch visual language. */
+html[data-theme='makaba'] body {
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  background: #d8d8da;
+  color: #262626;
+}
+html[data-theme='makaba'] .topbar {
+  background: #e7e7e9;
+  border-top-color: #c8c8ca;
+  border-bottom-color: #c8c8ca;
+}
+html[data-theme='makaba'] .board-nav {
+  background: #e7e7e9;
+}
+html[data-theme='makaba'] .card,
+html[data-theme='makaba'] .notice,
+html[data-theme='makaba'] .op-preview,
+html[data-theme='makaba'] .mod-deleted {
+  background: #dfdfe1;
+  border-color: #c7c7c9;
+  border-radius: 2px;
+}
+html[data-theme='makaba'] .thread-card {
+  border-left: 0;
+}
+html[data-theme='makaba'] .list > li {
+  background: #d3d3d5;
+  border-top-color: #c4c4c6;
+}
+html[data-theme='makaba'] a,
+html[data-theme='makaba'] .post-quote-link {
+  color: #ff6600;
+}
+html[data-theme='makaba'] .post-no {
+  color: #505050;
+}
+html[data-theme='makaba'] .post-author {
+  color: #666;
+}
+html[data-theme='makaba'] h1,
+html[data-theme='makaba'] h2,
+html[data-theme='makaba'] h3 {
+  color: #ff6600;
+}
+html[data-theme='makaba'] .brand-logo {
+  color: #333;
+}
+html[data-theme='makaba'] .muted,
+html[data-theme='makaba'] .post-link,
+html[data-theme='makaba'] .post-reply {
+  color: #7a7a7a;
+}
+html[data-theme='makaba'] .greentext {
+  color: #789922;
+}
+html[data-theme='makaba'] button,
+html[data-theme='makaba'] .button,
+html[data-theme='makaba'] input,
+html[data-theme='makaba'] textarea,
+html[data-theme='makaba'] select {
+  border-radius: 2px;
+}
+html[data-theme='makaba'] button,
+html[data-theme='makaba'] .button {
+  background: #f7f7f7;
+  color: #ff6600;
+  border: 1px solid #c0c0c0;
+}
+html[data-theme='makaba'] button.danger,
+html[data-theme='makaba'] .button.danger {
+  background: #b34030;
+  color: #fff;
+  border-color: #8f2e22;
+}
+
+/* Yotsuba refresh: closer to 4chan classic. */
+html[data-theme='yotsuba'] body {
+  background: #eef2ff;
+  color: #000;
+}
+html[data-theme='yotsuba'] .topbar {
+  background: #d6daf0;
+  border-top-color: #b7c5d9;
+  border-bottom-color: #b7c5d9;
+}
+html[data-theme='yotsuba'] .board-nav {
+  background: #d6daf0;
+}
+html[data-theme='yotsuba'] .card,
+html[data-theme='yotsuba'] .notice {
+  background: #d6daf0;
+  border: 1px solid #b7c5d9;
+  border-radius: 0;
+}
+html[data-theme='yotsuba'] .thread-card {
+  border-left: 0;
+}
+html[data-theme='yotsuba'] .op-preview {
+  background: #c7d2ee;
+  border: 1px solid #8ea5c8;
+  border-radius: 0;
+  padding: .2rem 0;
+}
+html[data-theme='yotsuba'] .list > li.op-preview,
+html[data-theme='yotsuba'] .preview-list > li.op-preview {
+  background: #c7d2ee;
+}
+html[data-theme='yotsuba'] .list > li {
+  background: #d6daf0;
+  border-top-color: #b7c5d9;
+}
+html[data-theme='yotsuba'] .post-no {
+  color: #000;
+}
+html[data-theme='yotsuba'] .post-author {
+  color: #117743;
+}
+html[data-theme='yotsuba'] .post-link,
+html[data-theme='yotsuba'] .post-reply {
+  color: #34345c;
+}
+html[data-theme='yotsuba'] .post-quote-link {
+  color: #d00;
+}
+html[data-theme='yotsuba'] .greentext {
+  color: #789922;
+}
+html[data-theme='yotsuba'] .brand-logo,
+html[data-theme='yotsuba'] h1,
+html[data-theme='yotsuba'] h2,
+html[data-theme='yotsuba'] h3 {
+  color: #af0a0f;
+}
+html[data-theme='yotsuba'] a {
+  color: #34345c;
+}
+html[data-theme='yotsuba'] button,
+html[data-theme='yotsuba'] .button,
+html[data-theme='yotsuba'] input,
+html[data-theme='yotsuba'] textarea,
+html[data-theme='yotsuba'] select {
+  border-radius: 0;
+  border-color: #9aaec6;
+}
+html[data-theme='yotsuba'] input,
+html[data-theme='yotsuba'] textarea,
+html[data-theme='yotsuba'] select {
+  background: #f6f7fb;
+  color: #000;
+}
+html[data-theme='yotsuba'] button,
+html[data-theme='yotsuba'] .button {
+  background: #f7f8fc;
+  color: #34345c;
+}
+html[data-theme='yotsuba'] button.danger,
+html[data-theme='yotsuba'] .button.danger {
+  background: #d44;
+  color: #fff;
+  border-color: #b33;
+}
+
+/* Lelouch: dark imperial style. */
+html[data-theme='lelouch'] body {
+  background: radial-gradient(circle at top, #141a33 0%, #0a0d18 58%);
+  color: #e7e9f5;
+}
+html[data-theme='lelouch'] .topbar,
+html[data-theme='lelouch'] .board-nav {
+  background: #12162a;
+  border-top-color: #2b3252;
+  border-bottom-color: #2b3252;
+}
+html[data-theme='lelouch'] .card,
+html[data-theme='lelouch'] .notice,
+html[data-theme='lelouch'] .op-preview,
+html[data-theme='lelouch'] .mod-deleted {
+  background: #161b30;
+  border-color: #2e3558;
+}
+html[data-theme='lelouch'] .thread-card {
+  border-left-color: #5f4a86;
+}
+html[data-theme='lelouch'] .brand-logo,
+html[data-theme='lelouch'] h1,
+html[data-theme='lelouch'] h2,
+html[data-theme='lelouch'] h3 {
+  color: #d5c18a;
+}
+html[data-theme='lelouch'] a {
+  color: #c6a86b;
+}
+html[data-theme='lelouch'] .post-quote-link {
+  color: #f05a74;
+}
+html[data-theme='lelouch'] .greentext {
+  color: #8fcb6a;
+}
+html[data-theme='lelouch'] button,
+html[data-theme='lelouch'] .button {
+  background: linear-gradient(180deg, #3c2f5f 0%, #2a2148 100%);
+  color: #f5ebd1;
+  border: 1px solid #5f4a86;
+}
+html[data-theme='lelouch'] button.secondary,
+html[data-theme='lelouch'] .button.secondary {
+  background: #171c32;
+  color: #d3d9f4;
+  border-color: #2e3558;
+}
+html[data-theme='lelouch'] button.danger,
+html[data-theme='lelouch'] .button.danger {
+  background: #8f1f36;
+  color: #fff;
+  border-color: #b4324d;
+}
+
 

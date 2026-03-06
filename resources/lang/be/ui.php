@@ -32,10 +32,13 @@ return [
     'continue' => 'Працягнуць',
 
     'theme' => 'Тэма',
-    'theme_sugar' => 'Sugar',
+    'theme_sugar' => 'Satou',
     'theme_makaba' => 'Makaba',
     'theme_rel' => 'Re-l',
     'theme_nyu' => 'Nyu',
+    'theme_futaba' => 'Futaba',
+    'theme_yotsuba' => 'Yotsuba',
+    'theme_lelouch' => 'Lelouch',
 
     'language' => 'Мова',
     'lang_be' => 'Бел',
@@ -69,6 +72,8 @@ return [
     'posts_24h' => 'Пастоў за 24г',
     'last_thread' => 'Апошні трэд',
     'no_last_thread' => 'няма',
+    'no_last_thread_hidden' => 'схавана',
+    'hidden_boards_total' => 'Схаваныя дошкі',
     'never' => 'ніколі',
     'no_boards' => 'Дошак пакуль няма.',
 
@@ -105,6 +110,7 @@ return [
     'details_for_auth' => 'Падрабязна для аўтарызаванага карыстальніка',
 
     'board_settings' => 'Налады дошкі',
+    'thread_limit' => 'Ліміт трэдаў',
     'bump_limit' => 'Бамп-ліміт',
     'rate_limit_count' => 'Макс. пастоў у акне',
     'rate_limit_window_seconds' => 'Памер акна (сэк)',
