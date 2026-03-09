@@ -1,5 +1,5 @@
 @php
-    $theme = session('theme', 'sugar');
+    $theme = session('theme', \App\Enums\SiteTheme::default()->value);
     $locale = app()->getLocale();
 @endphp
 <nav class="topbar">
@@ -26,22 +26,22 @@
             <label class="row topbar-field">
                 <span class="muted">{{ __('ui.theme') }}</span>
                 <select name="theme" class="topbar-select topbar-select-theme">
-                    <option value="sugar" {{ $theme === 'sugar' ? 'selected' : '' }}>{{ __('ui.theme_sugar') }}</option>
-                    <option value="makaba" {{ $theme === 'makaba' ? 'selected' : '' }}>{{ __('ui.theme_makaba') }}</option>
-                    <option value="re-l" {{ $theme === 're-l' ? 'selected' : '' }}>{{ __('ui.theme_rel') }}</option>
-                    <option value="nyu" {{ $theme === 'nyu' ? 'selected' : '' }}>{{ __('ui.theme_nyu') }}</option>
-                    <option value="futaba" {{ $theme === 'futaba' ? 'selected' : '' }}>{{ __('ui.theme_futaba') }}</option>
-                    <option value="yotsuba" {{ $theme === 'yotsuba' ? 'selected' : '' }}>{{ __('ui.theme_yotsuba') }}</option>
-                    <option value="lelouch" {{ $theme === 'lelouch' ? 'selected' : '' }}>{{ __('ui.theme_lelouch') }}</option>
+                    @foreach(\App\Enums\SiteTheme::cases() as $themeOption)
+                        <option value="{{ $themeOption->value }}" {{ $theme === $themeOption->value ? 'selected' : '' }}>
+                            {{ __($themeOption->labelKey()) }}
+                        </option>
+                    @endforeach
                 </select>
             </label>
 
             <label class="row topbar-field">
                 <span class="muted">{{ __('ui.language') }}</span>
                 <select name="locale" class="topbar-select topbar-select-locale">
-                    <option value="be" {{ $locale === 'be' ? 'selected' : '' }}>{{ __('ui.lang_be') }}</option>
-                    <option value="ru" {{ $locale === 'ru' ? 'selected' : '' }}>{{ __('ui.lang_ru') }}</option>
-                    <option value="en" {{ $locale === 'en' ? 'selected' : '' }}>{{ __('ui.lang_en') }}</option>
+                    @foreach(\App\Enums\SiteLocale::cases() as $localeOption)
+                        <option value="{{ $localeOption->value }}" {{ $locale === $localeOption->value ? 'selected' : '' }}>
+                            {{ __($localeOption->labelKey()) }}
+                        </option>
+                    @endforeach
                 </select>
             </label>
 

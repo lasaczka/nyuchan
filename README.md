@@ -2,12 +2,25 @@
 
 Private imageboard built on Laravel 12 (no JavaScript on the frontend).
 
+## Requirements
+- PHP `8.5+`
+- Composer `2.x`
+
+## Versioning
+- The current project version is stored in the root [`VERSION`](./VERSION) file.
+- Runtime value is available as `config('app.version')`.
+- You can print it with:
+
+```bash
+php artisan nyuchan:version
+```
+
 ## Features
 - Invite-only registration.
 - Roles: `user`, `mod`, `admin`.
 - Moderation: delete posts/threads, ban author, moderation log.
 - Localization: `be` (primary), `ru`, `en`.
-- Themes: `sugar`, `makaba`, `re-l`, `nyu`.
+- Themes: `satou`, `makaba`, `re-l`, `nyu`, `futaba`, `yotsuba`, `lelouch`.
 - Attachments: images + thumbnails, served via `/media/...`.
 - Storage backends: `local` and `s3` (Cloudflare R2).
 
@@ -76,7 +89,22 @@ The app uses:
 - `remember_*` (if "remember me" is enabled),
 - `thread_owner_{id}` (thread owner token).
 
-For anti-abuse, the app uses `abuse_id` in format `u:{user_id}` (no IP-based ban logic).
+For anti-abuse, the app uses derived `abuse_id` with no direct user ID storage in content metadata:
+
+- `abuse_id = HMAC_SHA256(user_id, APP_KEY)`
+- `abuse_id` is computed on demand and stored only where needed (`post_metas`, `bans`)
+- `users` table does not store `abuse_id`
+- no IP-based ban logic
+
+## Abuse ID versioning
+
+`abuse_id` behavior is versioned via `epoch` (see `PostingGuard::EPOCH`):
+
+- current epoch: `auth-v1` (HMAC-based)
+- legacy IDs like `u:{id}` are migrated by DB migration to HMAC values
+- if derivation logic changes in the future, introduce a new epoch (for example `auth-v2`) and migrate data
+
+`APP_KEY` must be set and valid. If missing/invalid, abuse ID derivation fails fast by exception.
 
 ## Commands
 ```bash

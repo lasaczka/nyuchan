@@ -1,5 +1,7 @@
 <x-app-layout>
     @php
+        /** @var \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection $posts */
+        $posts = $posts ?? collect();
         $showModTools = session('show_mod_tools', true);
     @endphp
     <x-slot name="header">
@@ -7,10 +9,6 @@
     </x-slot>
 
     <div class="stack">
-        @if(session('status'))
-            <div class="notice">{{ session('status') }}</div>
-        @endif
-
         @if(auth()->user()?->canModeratePosts() && $showModTools)
             <div class="card mod-thread-actions">
                 <form method="POST" action="{{ route('mod.thread.delete', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="mod-inline mod-inline-combined">
@@ -18,48 +16,50 @@
                     <input type="text" name="reason" placeholder="{{ __('ui.reason_optional') }}">
                     @if(auth()->user()?->canBanUsers())
                         <input type="number" name="minutes" min="5" max="43200" value="60" required>
-                        <button type="submit" class="danger">{{ __('ui.delete_thread') }}</button>
-                        <button type="submit" class="danger" formaction="{{ route('mod.thread.ban_author', ['board' => $board->slug, 'thread' => $thread->id]) }}">{{ __('ui.ban_thread_author') }}</button>
+                        <button type="submit" class="danger">{{ __('ui.delete_short') }}</button>
+                        <button type="submit" class="danger" formaction="{{ route('mod.thread.ban_author', ['board' => $board->slug, 'thread' => $thread->id]) }}">{{ __('ui.ban_short') }}</button>
                     @else
-                        <button type="submit" class="danger">{{ __('ui.delete_thread') }}</button>
+                        <button type="submit" class="danger">{{ __('ui.delete_short') }}</button>
                     @endif
                 </form>
             </div>
         @endif
 
         <div class="card" id="post-form">
-            <h3>{{ __('ui.reply') }}</h3>
-            <form method="POST" action="{{ route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="stack" enctype="multipart/form-data">
-                @csrf
-                <div>
-                    <label class="row" style="gap:.45rem; align-items:center;">
-                        <input type="checkbox" name="use_display_name" value="1" style="width:auto;" {{ old('use_display_name') ? 'checked' : '' }}>
-                        <span>{{ __('ui.post_with_name') }}</span>
-                    </label>
-                    @error('use_display_name')<div class="error">{{ $message }}</div>@enderror
-                </div>
-                <div>
-                    <label class="row" style="gap:.45rem; align-items:center;">
-                        <input type="checkbox" name="sage" value="1" style="width:auto;" {{ old('sage') ? 'checked' : '' }}>
-                        <span>{{ __('ui.sage') }}</span>
-                    </label>
-                    @error('sage')<div class="error">{{ $message }}</div>@enderror
-                </div>
-                <div>
-                    <label for="images">{{ __('ui.image_optional') }}</label>
-                    <input id="images" name="images[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
-                    <div class="muted format-help">{{ __('ui.image_policy') }}</div>
-                    @error('images')<div class="error">{{ $message }}</div>@enderror
-                    @if($errors->has('images.*'))<div class="error">{{ $errors->first('images.*') }}</div>@endif
-                </div>
-                <div>
-                    <label for="body">{{ __('ui.message') }}</label>
-                    <textarea id="body" name="body" required>{{ old('body', $quotePostId ? ('>>'.$quotePostId."\n") : '') }}</textarea>
-                    <div class="muted format-help">{{ __('ui.format_help') }}</div>
-                    @error('body')<div class="error">{{ $message }}</div>@enderror
-                </div>
-                <button type="submit">{{ __('ui.post_reply') }}</button>
-            </form>
+            <details class="reply-details" @if($errors->any()) open @endif>
+                <summary class="button">{{ __('ui.post_reply_go_form') }}</summary>
+                <form method="POST" action="{{ route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="stack" enctype="multipart/form-data">
+                    @csrf
+                    <div>
+                        <label class="row" style="gap:.45rem; align-items:center;">
+                            <input type="checkbox" name="use_display_name" value="1" style="width:auto;" {{ old('use_display_name') ? 'checked' : '' }}>
+                            <span>{{ __('ui.post_with_name') }}</span>
+                        </label>
+                        @error('use_display_name')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="row" style="gap:.45rem; align-items:center;">
+                            <input type="checkbox" name="sage" value="1" style="width:auto;" {{ old('sage') ? 'checked' : '' }}>
+                            <span>{{ __('ui.sage') }}</span>
+                        </label>
+                        @error('sage')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label for="images">{{ __('ui.image_optional') }}</label>
+                        <input id="images" name="images[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                        <div class="muted format-help">{{ __('ui.image_policy') }}</div>
+                        @error('images')<div class="error">{{ $message }}</div>@enderror
+                        @if($errors->has('images.*'))<div class="error">{{ $errors->first('images.*') }}</div>@endif
+                    </div>
+                    <div>
+                        <label for="body">{{ __('ui.message') }}</label>
+                        <textarea id="body" name="body" required>{{ old('body', $quotePostId ? ('>>'.$quotePostId."\n") : '') }}</textarea>
+                        <div class="muted format-help">{{ __('ui.format_help') }}</div>
+                        @error('body')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <button type="submit">{{ __('ui.post_send') }}</button>
+                </form>
+            </details>
         </div>
 
         <div class="card">
@@ -92,8 +92,22 @@
                             <a class="post-no" href="#p{{ $post->id }}">#{{ $post->id }}</a>
                             <span>{{ __('ui.by') }}</span>
                             <span class="post-author" @if($post->display_name && $post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: __('ui.anonymous') }}</span>
+                            @if($post->created_at)
+                                @php
+                                    $postTimeLabel = mb_convert_case($post->created_at->locale(app()->getLocale())->isoFormat('DD/MM/YY ddd HH:mm:ss'), MB_CASE_TITLE, 'UTF-8');
+                                @endphp
+                                <time class="post-time" datetime="{{ $post->created_at->toIso8601String() }}" title="{{ $post->created_at->format('Y-m-d H:i:s T') }}">{{ $postTimeLabel }}</time>
+                            @endif
                             @if($post->is_op_in_thread ?? false)
                                 <span>({{ __('ui.op_short') }})</span>
+                            @endif
+                            @if($loop->first)
+                                @auth
+                                    <form method="POST" action="{{ route('threads.favorite.toggle', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="post-fav-form">
+                                        @csrf
+                                        <button type="submit" class="post-fav {{ $isFavorite ? 'is-active' : '' }}" title="{{ $isFavorite ? __('ui.unfavorite_thread') : __('ui.favorite_thread') }}">{{ $isFavorite ? '★' : '☆' }}</button>
+                                    </form>
+                                @endauth
                             @endif
                             <a class="post-reply" href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $thread->id, 'quote' => $post->id]) }}#post-form" title="{{ __('ui.reply') }}">➤</a>
                             @if($post->is_sage)
@@ -137,10 +151,10 @@
                                                 <input type="text" name="reason" placeholder="{{ __('ui.reason_optional') }}">
                                                 @if(auth()->user()?->canBanUsers())
                                                     <input type="number" name="minutes" min="5" max="43200" value="60" required>
-                                                    <button type="submit" class="danger">{{ __('ui.delete_post') }}</button>
-                                                    <button type="submit" class="danger" formaction="{{ route('mod.post.ban', ['board' => $board->slug, 'thread' => $thread->id, 'post' => $post->id]) }}">{{ __('ui.ban_author') }}</button>
+                                                    <button type="submit" class="danger">{{ __('ui.delete_short') }}</button>
+                                                    <button type="submit" class="danger" formaction="{{ route('mod.post.ban', ['board' => $board->slug, 'thread' => $thread->id, 'post' => $post->id]) }}">{{ __('ui.ban_short') }}</button>
                                                 @else
-                                                    <button type="submit" class="danger">{{ __('ui.delete_post') }}</button>
+                                                    <button type="submit" class="danger">{{ __('ui.delete_short') }}</button>
                                                 @endif
                                             </form>
                                         @elseif(auth()->user()?->canBanUsers())
@@ -148,7 +162,7 @@
                                                 @csrf
                                                 <input type="text" name="reason" placeholder="{{ __('ui.ban_reason') }}" required>
                                                 <input type="number" name="minutes" min="5" max="43200" value="60" required>
-                                                <button type="submit" class="danger">{{ __('ui.ban_author') }}</button>
+                                                <button type="submit" class="danger">{{ __('ui.ban_short') }}</button>
                                             </form>
                                         @endif
                                     </div>
@@ -160,8 +174,10 @@
             </ul>
         </div>
 
-        <div class="card panel" style="text-align:center;">
-            <a class="button" href="#post-form">{{ __('ui.post_reply_go_form') }}</a>
-        </div>
+        @if($posts->count() > 1)
+            <div class="card panel" style="text-align:center;">
+                <a class="button secondary" href="#post-form">{{ __('ui.to_top') }}</a>
+            </div>
+        @endif
     </div>
 </x-app-layout>

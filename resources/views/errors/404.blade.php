@@ -1,5 +1,5 @@
 @php
-    $theme = session('theme', 'sugar');
+    $theme = session('theme', \App\Enums\SiteTheme::default()->value);
     $messages = trans('ui.error_404_pool');
     $messages = is_array($messages) && $messages !== [] ? $messages : ['Thread not found.'];
     $randomMessage = $messages[array_rand($messages)];
@@ -28,3 +28,5 @@
     </main>
 </body>
 </html>
+
+
