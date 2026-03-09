@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\PostMeta;
 use App\Models\Thread;
 use App\Models\User;
+use App\Support\PostingGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -42,7 +43,7 @@ class ModerationBanTest extends TestCase
         ]);
         PostMeta::query()->create([
             'post_id' => $post->id,
-            'abuse_id' => 'u:'.$author->id,
+            'abuse_id' => PostingGuard::abuseId($author->id)->value(),
             'epoch' => 'auth-v1',
         ]);
 
@@ -55,7 +56,7 @@ class ModerationBanTest extends TestCase
             'reason' => 'wipe',
         ])->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('bans', ['abuse_id' => 'u:'.$author->id, 'epoch' => 'auth-v1']);
+        $this->assertDatabaseHas('bans', ['abuse_id' => PostingGuard::abuseId($author->id)->value(), 'epoch' => 'auth-v1']);
         $this->assertSame(1, (int) $post->refresh()->is_deleted);
         $this->assertSame('', $post->body);
     }
@@ -85,18 +86,20 @@ class ModerationBanTest extends TestCase
         ]);
         PostMeta::query()->create([
             'post_id' => $post->id,
-            'abuse_id' => 'u:'.$mod->id,
+            'abuse_id' => PostingGuard::abuseId($mod->id)->value(),
             'epoch' => 'auth-v1',
         ]);
 
         $this->actingAs($mod)
+            ->from(route('threads.show', ['board' => $board->slug, 'thread' => $thread->id]))
             ->post(route('mod.post.ban', [
                 'board' => $board->slug,
                 'thread' => $thread->id,
                 'post' => $post->id,
             ]), [
                 'minutes' => 60,
-            ])->assertStatus(422);
+            ])->assertRedirect()
+            ->assertSessionHasErrors('ban');
 
         $this->assertCount(0, Ban::query()->get());
     }
