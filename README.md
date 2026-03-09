@@ -3,7 +3,7 @@
 Private imageboard built on Laravel 12 (no JavaScript on the frontend).
 
 ## Requirements
-- PHP `8.5+`
+- PHP `8.4+`
 - Composer `2.x`
 
 ## Versioning
