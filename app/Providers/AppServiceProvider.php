@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Board;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -18,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         PasswordRule::defaults(static fn () => PasswordRule::min(6));
+        Paginator::defaultView('vendor.pagination.default');
+        Paginator::defaultSimpleView('vendor.pagination.simple');
 
         // Locale is applied via SetLocaleFromSession middleware.
         View::composer('layouts.navigation', function ($view): void {
