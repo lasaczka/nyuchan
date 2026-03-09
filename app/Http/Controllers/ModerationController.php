@@ -8,10 +8,15 @@ use App\Models\ModAction;
 use App\Models\Post;
 use App\Models\Thread;
 use App\Support\PostingGuard;
+use App\ValueObjects\AbuseId;
 use Illuminate\Http\Request;
 
 class ModerationController extends Controller
 {
+    private const int BAN_REASON_MAX_LENGTH = 1000;
+    private const int BAN_MINUTES_MIN = 5;
+    private const int BAN_MINUTES_MAX = 43200;
+
     public function updateBoardSettings(Request $request, Board $board)
     {
         $user = $request->user();
@@ -69,16 +74,17 @@ class ModerationController extends Controller
         abort_unless($thread->board_id === $board->id && $post->thread_id === $thread->id, 404);
 
         $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:1000'],
-            'minutes' => ['required', 'integer', 'min:5', 'max:43200'],
+            'reason' => ['nullable', 'string', 'max:'.self::BAN_REASON_MAX_LENGTH],
+            'minutes' => ['required', 'integer', 'min:'.self::BAN_MINUTES_MIN, 'max:'.self::BAN_MINUTES_MAX],
         ]);
 
-        $abuseId = $post->meta?->abuse_id;
-        abort_if(! $abuseId, 422, __('ui.cannot_ban_unknown_author'));
-        abort_if($abuseId === PostingGuard::abuseId($user->id), 422, __('ui.cannot_ban_self'));
+        [$targetAbuseId, $banErrorKey] = $this->resolveAndValidateTargetAbuseId($post->meta?->abuse_id, (int) $user->id);
+        if (! $targetAbuseId) {
+            return back()->withErrors(['ban' => __($banErrorKey ?? 'ui.cannot_ban_unknown_author')]);
+        }
 
         $reason = trim((string) ($data['reason'] ?? ''));
-        $expiresAt = $this->banByAbuseId($abuseId, $reason, (int) $data['minutes'], $user->id);
+        $expiresAt = $this->banByAbuseId($targetAbuseId, $reason, (int) $data['minutes'], $user->id);
 
         if (! $post->is_deleted) {
             $post->update([
@@ -137,17 +143,18 @@ class ModerationController extends Controller
         abort_unless($thread->board_id === $board->id, 404);
 
         $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:1000'],
-            'minutes' => ['required', 'integer', 'min:5', 'max:43200'],
+            'reason' => ['nullable', 'string', 'max:'.self::BAN_REASON_MAX_LENGTH],
+            'minutes' => ['required', 'integer', 'min:'.self::BAN_MINUTES_MIN, 'max:'.self::BAN_MINUTES_MAX],
         ]);
 
         $op = $thread->posts()->with('meta')->orderBy('id')->first();
-        $abuseId = $op?->meta?->abuse_id;
-        abort_if(! $abuseId, 422, __('ui.cannot_ban_unknown_author'));
-        abort_if($abuseId === PostingGuard::abuseId($user->id), 422, __('ui.cannot_ban_self'));
+        [$targetAbuseId, $banErrorKey] = $this->resolveAndValidateTargetAbuseId($op?->meta?->abuse_id, (int) $user->id);
+        if (! $targetAbuseId) {
+            return back()->withErrors(['ban' => __($banErrorKey ?? 'ui.cannot_ban_unknown_author')]);
+        }
 
         $reason = trim((string) ($data['reason'] ?? ''));
-        $expiresAt = $this->banByAbuseId($abuseId, $reason, (int) $data['minutes'], $user->id);
+        $expiresAt = $this->banByAbuseId($targetAbuseId, $reason, (int) $data['minutes'], $user->id);
         $threadId = $thread->id;
         $thread->delete();
 
@@ -170,12 +177,12 @@ class ModerationController extends Controller
             ->with('status', __('ui.author_banned_until', ['datetime' => $expiresAt->format('Y-m-d H:i')]));
     }
 
-    private function banByAbuseId(string $abuseId, string $reason, int $minutes, int $actorId)
+    private function banByAbuseId(AbuseId $abuseId, string $reason, int $minutes, int $actorId)
     {
         $expiresAt = now()->addMinutes($minutes);
 
         Ban::create([
-            'abuse_id' => $abuseId,
+            'abuse_id' => $abuseId->value(),
             'epoch' => PostingGuard::EPOCH,
             'reason' => $reason,
             'expires_at' => $expiresAt,
@@ -183,5 +190,19 @@ class ModerationController extends Controller
         ]);
 
         return $expiresAt;
+    }
+
+    private function resolveAndValidateTargetAbuseId(?string $storedAbuseId, int $actorUserId): array
+    {
+        if (! $storedAbuseId) {
+            return [null, 'ui.cannot_ban_unknown_author'];
+        }
+
+        $targetAbuseId = AbuseId::fromStored($storedAbuseId);
+        if ($targetAbuseId->equals(PostingGuard::abuseId($actorUserId))) {
+            return [null, 'ui.cannot_ban_self'];
+        }
+
+        return [$targetAbuseId, null];
     }
 }

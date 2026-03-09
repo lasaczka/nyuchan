@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use App\Enums\Role;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     protected $fillable = [
@@ -18,6 +20,7 @@ class User extends Authenticatable
         'password',
         'role',
         'profile_color',
+        'last_seen_reply_post_id',
     ];
 
     protected $hidden = [
@@ -28,6 +31,11 @@ class User extends Authenticatable
     public function recoveryKey(): HasOne
     {
         return $this->hasOne(UserRecoveryKey::class);
+    }
+
+    public function favoriteThreads(): BelongsToMany
+    {
+        return $this->belongsToMany(Thread::class, 'user_favorite_threads')->withTimestamps();
     }
 
     public function canModeratePosts(): bool

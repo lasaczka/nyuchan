@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Board;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 
@@ -20,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Locale is applied via SetLocaleFromSession middleware.
         View::composer('layouts.navigation', function ($view): void {
+            if (! Schema::hasTable('boards')) {
+                $view->with('navBoards', collect());
+
+                return;
+            }
+
             $order = config('nyuchan.board_nav_order', []);
             $boards = Board::query()->where('is_hidden', false)->get();
 

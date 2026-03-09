@@ -10,12 +10,26 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ThreadController;
+use App\Http\Controllers\ThreadFavoriteController;
+use App\Services\UserPostRepliesService;
+use App\Models\Announcement;
 use App\Models\Board;
-use App\Models\Ban;
-use App\Models\User;
+use App\Models\Thread;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
-Route::get('/', function () {
+Route::get('/', function (UserPostRepliesService $repliesService) {
+    $replyNotice = null;
+
+    if (! Schema::hasTable('boards')) {
+        return view('welcome', [
+            'boardStats' => collect(),
+            'feedbackThread' => null,
+            'announcements' => collect(),
+            'replyNotice' => $replyNotice,
+        ]);
+    }
+
     $boards = Board::query()
         ->where('is_hidden', false)
         ->with('latestBumpedThread')
@@ -70,8 +84,44 @@ Route::get('/', function () {
         ]);
     }
 
+    $feedbackThread = Schema::hasTable('threads')
+        ? Thread::query()
+            ->select('threads.id', 'threads.board_id', 'threads.title')
+            ->whereHas('board', fn ($q) => $q->where('slug', 'meta'))
+            ->orderBy('id')
+            ->first()
+        : null;
+
+    $announcements = Schema::hasTable('announcements')
+        ? Announcement::query()
+            ->with('creator:id,username')
+            ->where('is_published', true)
+            ->where(function ($query) {
+                $query->whereNull('published_at')->orWhere('published_at', '<=', now());
+            })
+            ->latest('published_at')
+            ->latest('id')
+            ->limit(5)
+            ->get()
+        : collect();
+
+    $authUser = auth()->user();
+    if ($authUser) {
+        $lastSeenReplyPostId = max(0, (int) ($authUser->last_seen_reply_post_id ?? 0));
+        $summary = $repliesService->summarizeNewRepliesForUser($authUser, $lastSeenReplyPostId);
+        if (($summary['count'] ?? 0) > 0) {
+            $replyNotice = [
+                'count' => (int) ($summary['count'] ?? 0),
+                'latest_reply_post_id' => (int) ($summary['latest_reply_post_id'] ?? 0),
+            ];
+        }
+    }
+
     return view('welcome', [
         'boardStats' => $boardStats,
+        'feedbackThread' => $feedbackThread,
+        'announcements' => $announcements,
+        'replyNotice' => $replyNotice,
     ]);
 })->name('dashboard');
 
@@ -88,6 +138,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/replies/mark-read', [ProfileController::class, 'markRepliesRead'])->name('replies.mark_read');
 
     Route::get('/mod', [ModPanelController::class, 'index'])->name('mod.index');
     Route::post('/mod/users/{targetUser}/role', [ModPanelController::class, 'updateUserRole'])
@@ -98,6 +149,11 @@ Route::middleware('auth')->group(function () {
         ->name('mod.bans.unban');
     Route::post('/mod/tools', [ModPanelController::class, 'toggleUi'])
         ->name('mod.tools.toggle');
+    Route::post('/mod/announcements', [ModPanelController::class, 'storeAnnouncement'])
+        ->name('mod.announcements.store');
+    Route::post('/mod/announcements/{announcement}/publish', [ModPanelController::class, 'publishAnnouncement'])
+        ->whereNumber('announcement')
+        ->name('mod.announcements.publish');
 
     Route::get('/media/{attachment}', [MediaController::class, 'show'])
         ->whereNumber('attachment')
@@ -114,6 +170,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/{board:slug}/{thread}/post', [PostController::class, 'store'])
         ->whereNumber('thread')
         ->name('posts.store');
+    Route::post('/{board:slug}/{thread}/favorite', [ThreadFavoriteController::class, 'toggle'])
+        ->whereNumber('thread')
+        ->name('threads.favorite.toggle');
 
     Route::post('/{board:slug}/{thread}/delete', [ModerationController::class, 'deleteThread'])
         ->whereNumber('thread')

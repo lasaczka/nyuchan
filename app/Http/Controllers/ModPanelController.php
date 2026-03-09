@@ -3,18 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Models\Announcement;
 use App\Models\Ban;
 use App\Models\ModAction;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class ModPanelController extends Controller
 {
+    private const array AVAILABLE_TABS = [
+        'tools',
+        'users',
+        'announcements',
+        'bans',
+        'log',
+    ];
+
     public function index(Request $request)
     {
         $user = $request->user();
         abort_unless($user && $user->canModeratePosts(), 403);
+        $requestedTab = (string) $request->query('tab', 'tools');
+        $activeTab = in_array($requestedTab, self::AVAILABLE_TABS, true) ? $requestedTab : 'tools';
 
         $users = User::query()->orderBy('username')->get(['id', 'username', 'role']);
 
@@ -41,12 +53,25 @@ class ModPanelController extends Controller
             ->whereIn('id', $actorIds)
             ->pluck('username', 'id');
 
+        $announcements = collect();
+        if (Schema::hasTable('announcements')) {
+            $announcementsPerPage = max(1, (int) config('nyuchan.pagination.mod_announcements_per_page', 5));
+            $announcements = Announcement::query()
+                ->with('creator:id,username')
+                ->latest('published_at')
+                ->latest('id')
+                ->paginate($announcementsPerPage, ['*'], 'announcements_page')
+                ->withQueryString();
+        }
+
         return view('mod.index', [
             'users' => $users,
             'activeBans' => $activeBans,
             'actions' => $actions,
             'actorNames' => $actorNames,
             'roles' => [Role::User->value, Role::Mod->value, Role::Admin->value],
+            'announcements' => $announcements,
+            'activeTab' => $activeTab,
         ]);
     }
 
@@ -104,5 +129,55 @@ class ModPanelController extends Controller
         $request->session()->put('show_mod_tools', $enabled);
 
         return back()->with('status', __('ui.mod_tools_updated'));
+    }
+
+    public function storeAnnouncement(Request $request)
+    {
+        $actor = $request->user();
+        abort_unless($actor && $actor->canModeratePosts(), 403);
+
+        if (! Schema::hasTable('announcements')) {
+            return back()->with('status', __('ui.announcements_table_missing'));
+        }
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:180'],
+            'body' => ['required', 'string', 'max:20000'],
+            'is_published' => ['nullable', 'boolean'],
+            'show_author' => ['nullable', 'boolean'],
+        ]);
+
+        $publish = (bool) ($data['is_published'] ?? false);
+        $showAuthor = (bool) ($data['show_author'] ?? false);
+
+        Announcement::create([
+            'title' => trim($data['title']),
+            'body' => trim($data['body']),
+            'is_published' => $publish,
+            'published_at' => $publish ? now() : null,
+            'created_by_user_id' => $actor->id,
+            'show_author' => $showAuthor,
+        ]);
+
+        return back()->with('status', __('ui.announcement_saved'));
+    }
+
+    public function publishAnnouncement(Request $request, Announcement $announcement)
+    {
+        $actor = $request->user();
+        abort_unless($actor && $actor->canModeratePosts(), 403);
+
+        if (! Schema::hasTable('announcements')) {
+            return back()->with('status', __('ui.announcements_table_missing'));
+        }
+
+        if (! $announcement->is_published) {
+            $announcement->update([
+                'is_published' => true,
+                'published_at' => now(),
+            ]);
+        }
+
+        return back()->with('status', __('ui.announcement_published'));
     }
 }

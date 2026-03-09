@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PostMarkup;
 use App\Models\Board;
-use App\Models\ModAction;
 use App\Models\Post;
 use App\Models\PostAttachment;
 use App\Models\Thread;
 use App\Services\AttachmentStorage;
-use App\Support\PostFormatter;
+use App\Services\PostDeleteReasonService;
+use App\Services\PostFormatter;
+use App\Services\QuoteLinkResolver;
+use App\Services\ThreadFavoritesService;
 use App\Support\PostingGuard;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -18,13 +21,22 @@ use Illuminate\Support\Str;
 
 class ThreadController extends Controller
 {
-    public function __construct(private readonly AttachmentStorage $attachments)
-    {
+    private const string MACRO_REPLY = 'reply';
+    private const string MACRO_GREENTEXT = 'greentext';
+
+    public function __construct(
+        private readonly AttachmentStorage $attachments,
+        private readonly PostFormatter $formatter,
+        private readonly QuoteLinkResolver $quoteLinkResolver,
+        private readonly ThreadFavoritesService $threadFavorites,
+        private readonly PostDeleteReasonService $deleteReasonService,
+    ) {
     }
 
     public function show(Request $request, Board $board, Thread $thread)
     {
         abort_unless($thread->board_id === $board->id, 404);
+        $isFavorite = auth()->check() && $this->threadFavorites->isFavorite(auth()->user(), $thread);
 
         $quotePostId = max(0, $request->integer('quote'));
 
@@ -35,8 +47,8 @@ class ThreadController extends Controller
         $opPostId = $posts->first()?->id;
         $opAbuseId = $posts->first()?->meta?->abuse_id;
 
-        $quoteLinks = $this->buildQuoteLinks(PostFormatter::extractQuoteIds($posts->pluck('body')->all()));
-        $deleteReasons = $this->loadDeleteReasons($posts->where('is_deleted', true)->pluck('id')->all());
+        $quoteLinks = $this->quoteLinkResolver->buildQuoteLinks($this->formatter->extractQuoteIds($posts->pluck('body')->all()));
+        $deleteReasons = $this->deleteReasonService->loadForPosts($posts->where('is_deleted', true)->pluck('id')->all());
 
         $posts->each(function (Post $post) use ($quoteLinks, $thread, $deleteReasons, $opPostId, $opAbuseId): void {
             $post->delete_reason = $deleteReasons[$post->id] ?? null;
@@ -49,7 +61,7 @@ class ThreadController extends Controller
                 return;
             }
 
-            $post->rendered_body = PostFormatter::format(
+            $post->rendered_body = $this->formatter->format(
                 $post->body,
                 function (int $postId) use ($quoteLinks, $thread, $opPostId): ?array {
                     $target = $quoteLinks[$postId] ?? null;
@@ -74,6 +86,7 @@ class ThreadController extends Controller
             'thread' => $thread,
             'posts' => $posts,
             'quotePostId' => $quotePostId > 0 ? $quotePostId : null,
+            'isFavorite' => $isFavorite,
         ]);
     }
 
@@ -158,59 +171,6 @@ class ThreadController extends Controller
         });
     }
 
-    private function buildQuoteLinks(array $postIds): array
-    {
-        if ($postIds === []) {
-            return [];
-        }
-
-        return Post::query()
-            ->whereIn('id', $postIds)
-            ->with(['thread.board'])
-            ->get()
-            ->mapWithKeys(function (Post $post): array {
-                $boardSlug = $post->thread?->board?->slug;
-                $threadId = $post->thread?->id;
-
-                if (! $boardSlug || ! $threadId) {
-                    return [];
-                }
-
-                return [
-                    $post->id => [
-                        'href' => route('threads.show', ['board' => $boardSlug, 'thread' => $threadId]).'#p'.$post->id,
-                        'thread_id' => (int) $threadId,
-                    ],
-                ];
-            })
-            ->all();
-    }
-
-    private function loadDeleteReasons(array $postIds): array
-    {
-        if ($postIds === []) {
-            return [];
-        }
-
-        return ModAction::query()
-            ->where('action', 'delete_post')
-            ->where('target_type', Post::class)
-            ->whereIn('target_id', $postIds)
-            ->orderByDesc('id')
-            ->get()
-            ->unique('target_id')
-            ->mapWithKeys(function (ModAction $action): array {
-                $reason = trim((string) $action->reason);
-
-                if ($reason === '' || $reason === 'no reason') {
-                    $reason = null;
-                }
-
-                return [(int) $action->target_id => $reason];
-            })
-            ->all();
-    }
-
     private function createAttachment(Post $post, UploadedFile $file): void
     {
         $stored = $this->attachments->storeUploadedFile($file);
@@ -236,7 +196,7 @@ class ThreadController extends Controller
             return null;
         }
 
-        $macro = $this->macroTemplate($insertMacro);
+        $macro = $this->resolveMacroTemplate($insertMacro);
         if ($macro === null) {
             return null;
         }
@@ -250,17 +210,12 @@ class ThreadController extends Controller
         ));
     }
 
-    private function macroTemplate(string $key): ?string
+    private function resolveMacroTemplate(string $insertMacro): ?string
     {
-        return match ($key) {
-            'reply' => '>>123 ',
-            'greentext' => '>',
-            'bold' => '**text**',
-            'italic' => '*text*',
-            'strike' => '~~text~~',
-            'underline' => '__text__',
-            'spoiler' => '||spoiler||',
-            default => null,
+        return match ($insertMacro) {
+            self::MACRO_REPLY => '>>123 ',
+            self::MACRO_GREENTEXT => '>',
+            default => PostMarkup::templateFor($insertMacro),
         };
     }
 

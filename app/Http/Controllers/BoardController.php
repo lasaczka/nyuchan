@@ -3,16 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\Board;
-use App\Models\ModAction;
-use App\Models\Post;
 use App\Models\Thread;
-use App\Support\PostFormatter;
+use App\Services\PostDeleteReasonService;
+use App\Services\PostFormatter;
+use App\Services\QuoteLinkResolver;
+use App\Services\ThreadFavoritesService;
 use Illuminate\Support\Str;
 
 class BoardController extends Controller
 {
+    public function __construct(
+        private readonly PostFormatter $formatter,
+        private readonly QuoteLinkResolver $quoteLinkResolver,
+        private readonly ThreadFavoritesService $threadFavorites,
+        private readonly PostDeleteReasonService $deleteReasonService,
+    ) {
+    }
+
     public function index(Board $board)
     {
+        $favoriteThreadIds = auth()->check()
+            ? $this->threadFavorites->listFavoriteThreadIds(auth()->user())
+            : [];
+
         $threads = Thread::query()
             ->where('board_id', $board->id)
             ->orderByDesc('bumped_at')
@@ -25,8 +38,8 @@ class BoardController extends Controller
         $allPosts = $threads->getCollection()->flatMap(fn (Thread $thread) => $thread->posts);
         $bodies = $allPosts->pluck('body')->all();
 
-        $quoteLinks = $this->buildQuoteLinks(PostFormatter::extractQuoteIds($bodies));
-        $deleteReasons = $this->loadDeleteReasons($allPosts->where('is_deleted', true)->pluck('id')->all());
+        $quoteLinks = $this->quoteLinkResolver->buildQuoteLinks($this->formatter->extractQuoteIds($bodies));
+        $deleteReasons = $this->deleteReasonService->loadForPosts($allPosts->where('is_deleted', true)->pluck('id')->all());
 
         $threads->getCollection()->each(function (Thread $thread) use ($quoteLinks, $deleteReasons): void {
             $thread->posts->each(function ($post) use ($quoteLinks, $thread, $deleteReasons): void {
@@ -38,7 +51,7 @@ class BoardController extends Controller
                     return;
                 }
 
-                $post->rendered_preview = PostFormatter::format(
+                $post->rendered_preview = $this->formatter->format(
                     Str::limit($post->body, 220),
                     function (int $postId) use ($quoteLinks, $thread): ?array {
                         $target = $quoteLinks[$postId] ?? null;
@@ -56,59 +69,6 @@ class BoardController extends Controller
             });
         });
 
-        return view('boards.index', compact('board', 'threads'));
-    }
-
-    private function buildQuoteLinks(array $postIds): array
-    {
-        if ($postIds === []) {
-            return [];
-        }
-
-        return Post::query()
-            ->whereIn('id', $postIds)
-            ->with(['thread.board'])
-            ->get()
-            ->mapWithKeys(function (Post $post): array {
-                $boardSlug = $post->thread?->board?->slug;
-                $threadId = $post->thread?->id;
-
-                if (! $boardSlug || ! $threadId) {
-                    return [];
-                }
-
-                return [
-                    $post->id => [
-                        'href' => route('threads.show', ['board' => $boardSlug, 'thread' => $threadId]).'#p'.$post->id,
-                        'thread_id' => (int) $threadId,
-                    ],
-                ];
-            })
-            ->all();
-    }
-
-    private function loadDeleteReasons(array $postIds): array
-    {
-        if ($postIds === []) {
-            return [];
-        }
-
-        return ModAction::query()
-            ->where('action', 'delete_post')
-            ->where('target_type', Post::class)
-            ->whereIn('target_id', $postIds)
-            ->orderByDesc('id')
-            ->get()
-            ->unique('target_id')
-            ->mapWithKeys(function (ModAction $action): array {
-                $reason = trim((string) $action->reason);
-
-                if ($reason === '' || $reason === 'no reason') {
-                    $reason = null;
-                }
-
-                return [(int) $action->target_id => $reason];
-            })
-            ->all();
+        return view('boards.index', compact('board', 'threads', 'favoriteThreadIds'));
     }
 }

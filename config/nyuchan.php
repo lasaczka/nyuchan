@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'post_body_max_length' => (int) env('POST_BODY_MAX_LENGTH', 5000),
+
     'attachments_disk' => env('ATTACHMENTS_DISK', env('FILESYSTEM_DISK', 'local')),
     'attachments_fallback_disks' => array_values(array_filter(array_map(
         static fn (string $v): string => trim($v),
@@ -15,6 +17,16 @@ return [
         'image/webp',
     ],
     'board_nav_order' => ['a', 'b', 'rf', 'nsfw'],
+    'invite_cooldown_seconds' => [
+        'user' => (int) env('INVITE_COOLDOWN_USER_SECONDS', 60 * 60),
+        'mod' => (int) env('INVITE_COOLDOWN_MOD_SECONDS', 10 * 60),
+        'admin' => null,
+    ],
+    'pagination' => [
+        'mod_announcements_per_page' => (int) env('PAGINATION_MOD_ANNOUNCEMENTS_PER_PAGE', 5),
+        'profile_favorites_per_page' => (int) env('PAGINATION_PROFILE_FAVORITES_PER_PAGE', 50),
+        'profile_replies_per_page' => (int) env('PAGINATION_PROFILE_REPLIES_PER_PAGE', 10),
+    ],
 
     'profile_colors' => [
         '#ff6fb0' => 'ui.color_rose',

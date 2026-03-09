@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PostMarkup;
 use App\Models\Board;
 use App\Models\Post;
 use App\Models\PostAttachment;
@@ -15,6 +16,17 @@ use Illuminate\Support\Facades\Schema;
 
 class PostController extends Controller
 {
+    private const string MACRO_REPLY = 'reply';
+    private const string MACRO_GREENTEXT = 'greentext';
+
+    private const int DEFAULT_POST_BODY_MAX_LENGTH = 5000;
+    private const int DEFAULT_ATTACHMENTS_INPUT_MAX_BYTES = 8 * 1024 * 1024;
+    private const int DEFAULT_ATTACHMENTS_MAX_FILES = 4;
+    private const int MIN_UPLOAD_KB = 1;
+    private const int BYTES_IN_KB = 1024;
+    private const int BYTES_IN_MB = 1024 * 1024;
+    private const int BYTES_IN_GB = 1024 * 1024 * 1024;
+
     public function __construct(private readonly AttachmentStorage $attachments)
     {
     }
@@ -23,18 +35,22 @@ class PostController extends Controller
     {
         abort_unless($thread->board_id === $board->id, 404);
         abort_if($thread->is_locked, 403);
-        $imageMaxKb = max(1, (int) floor(((int) config('nyuchan.attachments_input_max_bytes', 8 * 1024 * 1024)) / 1024));
-        $maxFiles = max(1, (int) config('nyuchan.attachments_max_files', 4));
+        $bodyMaxLength = max(1, (int) config('nyuchan.post_body_max_length', self::DEFAULT_POST_BODY_MAX_LENGTH));
+        $imageMaxKb = max(
+            self::MIN_UPLOAD_KB,
+            (int) floor(((int) config('nyuchan.attachments_input_max_bytes', self::DEFAULT_ATTACHMENTS_INPUT_MAX_BYTES)) / self::BYTES_IN_KB)
+        );
+        $maxFiles = max(self::MIN_UPLOAD_KB, (int) config('nyuchan.attachments_max_files', self::DEFAULT_ATTACHMENTS_MAX_FILES));
         $phpUploadMax = $this->formatIniSizeToBytes((string) ini_get('upload_max_filesize'));
         $phpPostMax = $this->formatIniSizeToBytes((string) ini_get('post_max_size'));
-        $phpEffectiveMax = max(1, min($phpUploadMax, $phpPostMax));
+        $phpEffectiveMax = max(self::MIN_UPLOAD_KB, min($phpUploadMax, $phpPostMax));
 
         if ($macroResponse = $this->macroInsertResponse($request)) {
             return $macroResponse;
         }
 
         $data = $request->validate([
-            'body' => ['required', 'string', 'max:5000'],
+            'body' => ['required', 'string', 'max:'.$bodyMaxLength],
             'use_display_name' => ['nullable', 'boolean'],
             'sage' => ['nullable', 'boolean'],
             'images' => ['nullable', 'array', 'max:'.$maxFiles],
@@ -42,7 +58,7 @@ class PostController extends Controller
         ], [
             'images.max' => __('ui.image_max_files', ['count' => $maxFiles]),
             'images.*.uploaded' => __('ui.image_upload_failed_php', ['size' => $this->formatBytes($phpEffectiveMax)]),
-            'images.*.max' => __('ui.image_too_large_input', ['size' => $this->formatBytes($imageMaxKb * 1024)]),
+            'images.*.max' => __('ui.image_too_large_input', ['size' => $this->formatBytes($imageMaxKb * self::BYTES_IN_KB)]),
         ]);
 
         $abuseId = PostingGuard::abuseId($request->user()?->id);
@@ -114,7 +130,7 @@ class PostController extends Controller
             return null;
         }
 
-        $macro = $this->macroTemplate($insertMacro);
+        $macro = $this->resolveMacroTemplate($insertMacro);
         if ($macro === null) {
             return null;
         }
@@ -128,17 +144,12 @@ class PostController extends Controller
         ));
     }
 
-    private function macroTemplate(string $key): ?string
+    private function resolveMacroTemplate(string $insertMacro): ?string
     {
-        return match ($key) {
-            'reply' => '>>123 ',
-            'greentext' => '>',
-            'bold' => '**text**',
-            'italic' => '*text*',
-            'strike' => '~~text~~',
-            'underline' => '__text__',
-            'spoiler' => '||spoiler||',
-            default => null,
+        return match ($insertMacro) {
+            self::MACRO_REPLY => '>>123 ',
+            self::MACRO_GREENTEXT => '>',
+            default => PostMarkup::templateFor($insertMacro),
         };
     }
 
@@ -153,20 +164,20 @@ class PostController extends Controller
         $num = (float) $v;
 
         return (int) match ($unit) {
-            'g' => $num * 1024 * 1024 * 1024,
-            'm' => $num * 1024 * 1024,
-            'k' => $num * 1024,
+            'g' => $num * self::BYTES_IN_GB,
+            'm' => $num * self::BYTES_IN_MB,
+            'k' => $num * self::BYTES_IN_KB,
             default => (int) $num,
         };
     }
 
     private function formatBytes(int $bytes): string
     {
-        if ($bytes >= 1024 * 1024) {
-            return rtrim(rtrim(number_format($bytes / (1024 * 1024), 2, '.', ''), '0'), '.').' MB';
+        if ($bytes >= self::BYTES_IN_MB) {
+            return rtrim(rtrim(number_format($bytes / self::BYTES_IN_MB, 2, '.', ''), '0'), '.').' MB';
         }
 
-        return rtrim(rtrim(number_format($bytes / 1024, 2, '.', ''), '0'), '.').' KB';
+        return rtrim(rtrim(number_format($bytes / self::BYTES_IN_KB, 2, '.', ''), '0'), '.').' KB';
     }
 
     private function supportsSageColumn(): bool

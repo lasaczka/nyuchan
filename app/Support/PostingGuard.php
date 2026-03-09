@@ -6,22 +6,23 @@ use App\Models\Ban;
 use App\Models\Board;
 use App\Models\Post;
 use App\Models\PostMeta;
+use App\ValueObjects\AbuseId;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
-class PostingGuard
+final class PostingGuard
 {
     public const EPOCH = 'auth-v1';
 
-    public static function abuseId(?int $userId): string
+    public static function abuseId(?int $userId): AbuseId
     {
-        return 'u:'.($userId ?: 0);
+        return AbuseId::fromUserId($userId);
     }
 
-    public static function ensureNotBanned(string $abuseId): void
+    public static function ensureNotBanned(AbuseId $abuseId): void
     {
         $activeBan = Ban::query()
-            ->where('abuse_id', $abuseId)
+            ->where('abuse_id', $abuseId->value())
             ->where('epoch', self::EPOCH)
             ->where(function ($query) {
                 $query->whereNull('expires_at')
@@ -45,13 +46,13 @@ class PostingGuard
         ]);
     }
 
-    public static function enforceRateLimit(Board $board, string $abuseId): void
+    public static function enforceRateLimit(Board $board, AbuseId $abuseId): void
     {
         $limitCount = max(1, (int) ($board->post_rate_limit_count ?? 3));
         $windowSeconds = max(5, (int) ($board->post_rate_limit_window_seconds ?? 60));
 
         $recentCount = PostMeta::query()
-            ->where('abuse_id', $abuseId)
+            ->where('abuse_id', $abuseId->value())
             ->where('epoch', self::EPOCH)
             ->whereHas('post', function ($query) use ($board, $windowSeconds) {
                 $query->where('created_at', '>=', now()->subSeconds($windowSeconds))
@@ -68,11 +69,11 @@ class PostingGuard
         ]);
     }
 
-    public static function stampPost(Post $post, string $abuseId): void
+    public static function stampPost(Post $post, AbuseId $abuseId): void
     {
         PostMeta::updateOrCreate(
             ['post_id' => $post->id],
-            ['abuse_id' => $abuseId, 'epoch' => self::EPOCH]
+            ['abuse_id' => $abuseId->value(), 'epoch' => self::EPOCH]
         );
     }
 }

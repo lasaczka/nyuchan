@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\SiteLocale;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
@@ -9,15 +10,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SetLocaleFromSession
 {
-    private const LOCALES = ['be', 'ru', 'en'];
-
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = (string) $request->session()->get('locale', config('app.locale', 'be'));
-
-        if (! in_array($locale, self::LOCALES, true)) {
-            $locale = 'be';
-        }
+        $sessionLocale = (string) $request->session()->get('locale', config('app.locale', SiteLocale::default()->value));
+        $locale = SiteLocale::fromNullable($sessionLocale)->value;
 
         app()->setLocale($locale);
         Carbon::setLocale($locale);

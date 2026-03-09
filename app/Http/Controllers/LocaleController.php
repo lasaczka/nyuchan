@@ -2,26 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SiteLocale;
+use App\Enums\SiteTheme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class LocaleController extends Controller
 {
-    private const LOCALES = ['be', 'ru', 'en'];
-    private const THEMES = ['sugar', 'makaba', 're-l', 'nyu', 'futaba', 'yotsuba', 'lelouch'];
-
     public function set(Request $request): RedirectResponse
     {
-        $locale = (string) $request->query('locale', 'be');
-        $theme = (string) $request->query('theme', 'sugar');
-
-        if (! in_array($locale, self::LOCALES, true)) {
-            $locale = 'be';
-        }
-
-        if (! in_array($theme, self::THEMES, true)) {
-            $theme = 'sugar';
-        }
+        $locale = SiteLocale::fromNullable((string) $request->query('locale', SiteLocale::default()->value))->value;
+        $theme = SiteTheme::fromNullable((string) $request->query('theme', SiteTheme::default()->value))->value;
 
         $request->session()->put('locale', $locale);
         $request->session()->put('theme', $theme);

@@ -15,6 +15,11 @@ return [
 
     'name' => env('APP_NAME', 'Nyuchan'),
 
+    'version' => env(
+        'APP_VERSION',
+        ($version = trim((string) @file_get_contents(base_path('VERSION')))) !== '' ? $version : '0.0.0'
+    ),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
