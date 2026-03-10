@@ -110,52 +110,92 @@ html[data-theme='lelouch'] {
 }
 
 html[data-theme='virus'] {
-  --bg: #030606;
-  --panel: #071010;
-  --panel-2: #0a1616;
+  --bg: #010303;
+  --panel: #041010;
+  --panel-2: #061515;
   --text: #9eff8f;
-  --muted: #5ddf74;
-  --line: #13482b;
-  --accent: #39ff14;
-  --accent-2: #12b36d;
+  --muted: #57c46e;
+  --line: #0f3d22;
+  --accent: #4ce36b;
+  --accent-2: #1f8d4f;
   --danger: #ff4668;
-  --code-bg: #06110a;
-  --post-no-color: #39ff14;
+  --code-bg: #031009;
+  --post-no-color: #4ce36b;
   --post-author-color: #7ef7a6;
-  --post-bg: #05100d;
+  --post-bg: #04120d;
   --font-main: Consolas, 'Courier New', monospace;
-  --table-scroll-bg: #071010;
-  --table-sticky-bg: #0a1616;
+  --table-scroll-bg: #041010;
+  --table-sticky-bg: #061515;
 }
 
 html[data-theme='virus'] body {
-  text-shadow: 0 0 0.45px rgba(57, 255, 20, 0.35);
+  text-shadow: 0 0 0.35px rgba(76, 227, 107, 0.2);
 }
 
 html[data-theme='virus'] .card {
-  box-shadow: inset 0 0 0 1px rgba(57, 255, 20, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(76, 227, 107, 0.05);
 }
 
 html[data-theme='virus'] button:not(.secondary):not(.danger),
 html[data-theme='virus'] .button:not(.secondary):not(.danger) {
-  background: #0d2913;
+  background: #0b2614;
   color: #baffbd;
-  border-color: #1f8d34;
+  border-color: #1f8d4f;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(76, 227, 107, 0.12);
 }
 
 html[data-theme='virus'] button.secondary,
 html[data-theme='virus'] .button.secondary {
-  background: #071010;
+  background: #041010;
   color: #7ef7a6;
-  border-color: #1c6a37;
+  border-color: #1b6f41;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+}
+html[data-theme='virus'] button.danger,
+html[data-theme='virus'] .button.danger {
+  background: #2a1015;
+  color: #ff9ab0;
+  border-color: #7b2f3e;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(255, 70, 104, 0.14);
 }
 
 html[data-theme='virus'] input,
 html[data-theme='virus'] select,
 html[data-theme='virus'] textarea {
-  background: #04100a;
+  background: #03110a;
   color: #9eff8f;
-  border-color: #1c6a37;
+  border-color: #1a6b3d;
+}
+
+html[data-theme='virus'] input:focus,
+html[data-theme='virus'] select:focus,
+html[data-theme='virus'] textarea:focus,
+html[data-theme='virus'] button:focus,
+html[data-theme='virus'] .button:focus {
+  outline: none;
+  border-color: #4ce36b;
+  box-shadow: 0 0 0 2px rgba(76, 227, 107, 0.22);
+}
+
+html[data-theme='virus'] input:focus-visible,
+html[data-theme='virus'] select:focus-visible,
+html[data-theme='virus'] textarea:focus-visible,
+html[data-theme='virus'] button:focus-visible,
+html[data-theme='virus'] .button:focus-visible {
+  outline: none;
+  border-color: #66f08a;
+  box-shadow: 0 0 0 2px rgba(102, 240, 138, 0.28);
 }
 
 html[data-theme='virus'] .spoiler {
@@ -167,6 +207,26 @@ html[data-theme='virus'] .spoiler:hover {
   color: #0b1b0e;
 }
 
+html[data-theme='virus'] .post-meta {
+  color: #7ef7a6;
+  gap: .35rem;
+  letter-spacing: .02em;
+}
+
+html[data-theme='virus'] .post-meta .post-no::before {
+  content: "[";
+  color: #12b36d;
+}
+
+html[data-theme='virus'] .post-meta .post-no::after {
+  content: "]";
+  color: #12b36d;
+}
+
+html[data-theme='virus'] .post-meta .post-time::before {
+  content: "@ ";
+  color: #12b36d;
+}
 
 * { box-sizing: border-box; }
 body {
@@ -504,6 +564,7 @@ input, textarea, select {
 }
 textarea { min-height: 8rem; resize: vertical; }
 label { font-weight: 600; display: block; margin-bottom: .25rem; }
+
 
 button, .button {
   display: inline-block;
@@ -1179,6 +1240,13 @@ html[data-theme] .post-fav:hover {
   text-decoration: none;
 }
 
+html[data-theme='virus'] .tab-link.is-active {
+  background: #12311c;
+  color: #baffbd;
+  border-color: #31a55a;
+  box-shadow: inset 0 0 0 1px rgba(76, 227, 107, 0.2);
+}
+
 .thread-post-layout {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1603,5 +1671,6 @@ html[data-theme='lelouch'] .button.danger {
   color: #fff;
   border-color: #b4324d;
 }
+
 
 
