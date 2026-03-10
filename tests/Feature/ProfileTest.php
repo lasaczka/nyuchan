@@ -35,7 +35,7 @@ class ProfileTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
+            ->assertRedirect('/profile?tab=settings');
 
         $this->assertSame('newname', $user->refresh()->username);
     }

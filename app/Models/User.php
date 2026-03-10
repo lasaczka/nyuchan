@@ -20,6 +20,9 @@ class User extends Authenticatable
         'password',
         'role',
         'profile_color',
+        'tripcode_secret',
+        'use_tripcode',
+        'show_name_with_tripcode',
         'last_seen_reply_post_id',
     ];
 
@@ -58,6 +61,9 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'role' => Role::class,
+            'tripcode_secret' => 'encrypted',
+            'use_tripcode' => 'boolean',
+            'show_name_with_tripcode' => 'boolean',
         ];
     }
 }

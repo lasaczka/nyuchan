@@ -14,16 +14,16 @@ return [
     'bb' => [
         'title' => 'Random++',
         'description' => 'Flying outside all dimensions.',
-        'anonymous' => 'Shade',
+        'anonymous' => 'Junk',
     ],
     'nsfw' => [
         'title' => 'NSFW',
         'description' => 'What you are too shy to show your mom.',
-        'anonymous' => 'Nameless',
+        'anonymous' => 'Hentai',
     ],
     'rf' => [
         'title' => 'Refuge',
         'description' => 'Your last refuge.',
-        'anonymous' => 'Refugee',
+        'anonymous' => 'Shade',
     ],
 ];

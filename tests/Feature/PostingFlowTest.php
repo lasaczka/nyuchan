@@ -125,4 +125,83 @@ class PostingFlowTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_name_posting_uses_tripcode_instead_of_name_when_enabled_in_profile(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'kitsune',
+            'use_tripcode' => true,
+            'tripcode_secret' => 'secret-123',
+        ]);
+
+        $board = Board::query()->create([
+            'slug' => 'b',
+            'title' => 'Random',
+            'bump_limit' => 250,
+            'is_hidden' => false,
+            'post_rate_limit_count' => 10,
+            'post_rate_limit_window_seconds' => 60,
+        ]);
+        $thread = Thread::query()->create([
+            'board_id' => $board->id,
+            'title' => 'T',
+            'bumped_at' => now(),
+            'is_locked' => false,
+            'owner_token_hash' => hash('sha256', 'owner'),
+            'owner_token_issued_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]), [
+                'body' => 'trip reply',
+                'use_display_name' => '1',
+            ])
+            ->assertRedirect();
+
+        $post = Post::query()->latest('id')->firstOrFail();
+
+        $this->assertNull($post->display_name);
+        $this->assertNotNull($post->tripcode);
+        $this->assertStringStartsWith('!', (string) $post->tripcode);
+    }
+
+    public function test_name_posting_can_show_name_with_tripcode_when_enabled_in_profile(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'kitsune',
+            'use_tripcode' => true,
+            'show_name_with_tripcode' => true,
+            'tripcode_secret' => 'secret-123',
+        ]);
+
+        $board = Board::query()->create([
+            'slug' => 'b',
+            'title' => 'Random',
+            'bump_limit' => 250,
+            'is_hidden' => false,
+            'post_rate_limit_count' => 10,
+            'post_rate_limit_window_seconds' => 60,
+        ]);
+        $thread = Thread::query()->create([
+            'board_id' => $board->id,
+            'title' => 'T',
+            'bumped_at' => now(),
+            'is_locked' => false,
+            'owner_token_hash' => hash('sha256', 'owner'),
+            'owner_token_issued_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]), [
+                'body' => 'trip reply',
+                'use_display_name' => '1',
+            ])
+            ->assertRedirect();
+
+        $post = Post::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('kitsune', $post->display_name);
+        $this->assertNotNull($post->tripcode);
+        $this->assertStringStartsWith('!', (string) $post->tripcode);
+    }
 }

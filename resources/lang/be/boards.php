@@ -4,7 +4,7 @@ return [
     'a' => [
         'title' => 'Анімэ',
         'description' => 'Анімэ і манга.',
-        'anonymous' => 'Ота-анон',
+        'anonymous' => 'Няшка',
     ],
     'b' => [
         'title' => 'Лухта',
@@ -14,16 +14,16 @@ return [
     'bb' => [
         'title' => 'Лухта++',
         'description' => 'Лятаем звонку ўсіх вымярэнняў.',
-        'anonymous' => 'Цень',
+        'anonymous' => 'Торч',
     ],
     'nsfw' => [
         'title' => '18+',
         'description' => 'Тое, што саромеешся паказаць маме.',
-        'anonymous' => 'Безыменны',
+        'anonymous' => 'Вычварэнец',
     ],
     'rf' => [
         'title' => 'Прытулак',
         'description' => 'Твой апошні прытулак.',
-        'anonymous' => 'Уцякач',
+        'anonymous' => 'Цень',
     ],
 ];

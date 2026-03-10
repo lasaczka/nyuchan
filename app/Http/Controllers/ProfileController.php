@@ -106,10 +106,33 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-        $request->user()->save();
+        $user = $request->user();
+        $validated = $request->validated();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        $useTripcode = (bool) ($validated['use_tripcode'] ?? false);
+        $showNameWithTripcode = (bool) ($validated['show_name_with_tripcode'] ?? false);
+        $tripcodeSecretInput = trim((string) ($validated['tripcode_secret'] ?? ''));
+        $tripcodeSecret = $tripcodeSecretInput !== '' ? $tripcodeSecretInput : $user->tripcode_secret;
+
+        if ($useTripcode && (string) $tripcodeSecret === '') {
+            return Redirect::route('profile.edit', ['tab' => 'settings'])
+                ->withErrors(['tripcode_secret' => __('ui.tripcode_secret_required')]);
+        }
+
+        $user->fill([
+            'username' => $validated['username'],
+            'profile_color' => $validated['profile_color'] ?? null,
+            'use_tripcode' => $useTripcode,
+            'show_name_with_tripcode' => $showNameWithTripcode,
+        ]);
+
+        if ($tripcodeSecretInput !== '') {
+            $user->tripcode_secret = $tripcodeSecretInput;
+        }
+
+        $user->save();
+
+        return Redirect::route('profile.edit', ['tab' => 'settings'])->with('status', __('ui.profile_updated'));
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\PostAttachment;
 use App\Models\Thread;
 use App\Services\AttachmentStorage;
 use App\Services\PostMacroService;
+use App\Services\TripcodeService;
 use App\Support\PostingGuard;
 use App\ValueObjects\AttachmentUploadLimits;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class PostController extends Controller
     public function __construct(
         private readonly AttachmentStorage $attachments,
         private readonly PostMacroService $postMacro,
+        private readonly TripcodeService $tripcodes,
     ) {
     }
 
@@ -55,11 +57,17 @@ class PostController extends Controller
 
         $post = DB::transaction(function () use ($data, $thread, $request, $board, $abuseId) {
             $preCount = $thread->posts()->count();
+            $user = $request->user();
+            $useDisplayName = ! empty($data['use_display_name']);
+            $useTripcode = $useDisplayName && (bool) ($user?->use_tripcode ?? false);
+            $tripcode = $useTripcode && $user ? $this->tripcodes->generateForUser($user) : null;
+            $showNameWithTripcode = $useTripcode && (bool) ($user?->show_name_with_tripcode ?? false);
 
             $payload = [
                 'thread_id' => $thread->id,
-                'display_name' => ! empty($data['use_display_name']) ? ($request->user()?->username ?: null) : null,
-                'display_color' => ! empty($data['use_display_name']) ? ($request->user()?->profile_color ?: null) : null,
+                'display_name' => $useDisplayName && (! $useTripcode || $showNameWithTripcode) ? ($user?->username ?: null) : null,
+                'display_color' => $useDisplayName ? ($user?->profile_color ?: null) : null,
+                'tripcode' => $tripcode,
                 'body' => $data['body'],
                 'is_deleted' => false,
             ];

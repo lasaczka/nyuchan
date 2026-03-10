@@ -13,6 +13,7 @@ class Post extends Model
         'thread_id',
         'display_name',
         'display_color',
+        'tripcode',
         'body',
         'is_sage',
         'is_deleted',

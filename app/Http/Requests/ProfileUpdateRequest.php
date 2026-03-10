@@ -27,6 +27,9 @@ class ProfileUpdateRequest extends FormRequest
                 'string',
                 Rule::in(array_keys(config('nyuchan.profile_colors', []))),
             ],
+            'use_tripcode' => ['nullable', 'boolean'],
+            'show_name_with_tripcode' => ['nullable', 'boolean'],
+            'tripcode_secret' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

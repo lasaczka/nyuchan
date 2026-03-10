@@ -4,7 +4,7 @@ return [
     'a' => [
         'title' => 'Аниме',
         'description' => 'Аниме и манга.',
-        'anonymous' => 'Ота-анон',
+        'anonymous' => 'Няшка',
     ],
     'b' => [
         'title' => 'Бред',
@@ -14,16 +14,16 @@ return [
     'bb' => [
         'title' => 'Бред++',
         'description' => 'Летаем снаружи всех измерений.',
-        'anonymous' => 'Тень',
+        'anonymous' => 'Торч',
     ],
     'nsfw' => [
         'title' => '18+',
         'description' => 'То, что стесняешься показать маме.',
-        'anonymous' => 'Безымянный',
+        'anonymous' => 'Извращенец',
     ],
     'rf' => [
         'title' => 'Убежище',
         'description' => 'Твое последнее убежище.',
-        'anonymous' => 'Беженец',
+        'anonymous' => 'Тень',
     ],
 ];

@@ -147,6 +147,25 @@
                         </select>
                         @error('profile_color')<div class="error">{{ $message }}</div>@enderror
                     </div>
+                    <div>
+                        <label class="row" style="gap:.45rem; align-items:center;">
+                            <input type="checkbox" name="use_tripcode" value="1" style="width:auto;" {{ old('use_tripcode', $user->use_tripcode) ? 'checked' : '' }}>
+                            <span>{{ __('ui.use_tripcode') }}</span>
+                        </label>
+                        @error('use_tripcode')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="row" style="gap:.45rem; align-items:center;">
+                            <input type="checkbox" name="show_name_with_tripcode" value="1" style="width:auto;" {{ old('show_name_with_tripcode', $user->show_name_with_tripcode) ? 'checked' : '' }}>
+                            <span>{{ __('ui.show_name_with_tripcode') }}</span>
+                        </label>
+                        @error('show_name_with_tripcode')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label for="tripcode_secret">{{ __('ui.tripcode_secret') }}</label>
+                        <input id="tripcode_secret" type="password" name="tripcode_secret" autocomplete="new-password" placeholder="{{ __('ui.tripcode_secret_placeholder') }}">
+                        @error('tripcode_secret')<div class="error">{{ $message }}</div>@enderror
+                    </div>
                     <button type="submit">{{ __('ui.save') }}</button>
                 </form>
             </div>

@@ -99,7 +99,11 @@
                         <div class="post-meta">
                             <a class="post-no" href="#p{{ $post->id }}">#{{ $post->id }}</a>
                             <span>{{ __('ui.by') }}</span>
-                            <span class="post-author" @if($post->display_name && $post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: __('ui.anonymous') }}</span>
+                            @if($post->tripcode && ! $post->display_name)
+                                <span class="post-identity"><span class="post-author">{{ $board->display_anonymous_name }}</span><span class="post-tripcode" @if($post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->tripcode }}</span></span>
+                            @else
+                                <span class="post-author" @if($post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: $board->display_anonymous_name }}@if($post->tripcode){{ $post->tripcode }}@endif</span>
+                            @endif
                             @if($post->created_at)
                                 @php
                                     $postTimeLabel = mb_convert_case($post->created_at->locale(app()->getLocale())->isoFormat('DD/MM/YY ddd HH:mm:ss'), MB_CASE_TITLE, 'UTF-8');

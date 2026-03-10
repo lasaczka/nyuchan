@@ -8,6 +8,7 @@ use App\Models\PostAttachment;
 use App\Models\Thread;
 use App\Services\AttachmentStorage;
 use App\Services\PostMacroService;
+use App\Services\TripcodeService;
 use App\Services\PostDeleteReasonService;
 use App\Services\PostFormatter;
 use App\Services\QuoteLinkResolver;
@@ -29,6 +30,7 @@ class ThreadController extends Controller
         private readonly ThreadFavoritesService $threadFavorites,
         private readonly PostDeleteReasonService $deleteReasonService,
         private readonly PostMacroService $postMacro,
+        private readonly TripcodeService $tripcodes,
     ) {
     }
 
@@ -116,6 +118,11 @@ class ThreadController extends Controller
 
         return DB::transaction(function () use ($data, $board, $request, $abuseId) {
             $ownerToken = Str::random(32);
+            $user = $request->user();
+            $useDisplayName = ! empty($data['use_display_name']);
+            $useTripcode = $useDisplayName && (bool) ($user?->use_tripcode ?? false);
+            $tripcode = $useTripcode && $user ? $this->tripcodes->generateForUser($user) : null;
+            $showNameWithTripcode = $useTripcode && (bool) ($user?->show_name_with_tripcode ?? false);
 
             $thread = Thread::create([
                 'board_id' => $board->id,
@@ -128,8 +135,9 @@ class ThreadController extends Controller
 
             $post = Post::create([
                 'thread_id' => $thread->id,
-                'display_name' => ! empty($data['use_display_name']) ? ($request->user()?->username ?: null) : null,
-                'display_color' => ! empty($data['use_display_name']) ? ($request->user()?->profile_color ?: null) : null,
+                'display_name' => $useDisplayName && (! $useTripcode || $showNameWithTripcode) ? ($user?->username ?: null) : null,
+                'display_color' => $useDisplayName ? ($user?->profile_color ?: null) : null,
+                'tripcode' => $tripcode,
                 'body' => $data['body'],
                 'is_deleted' => false,
             ]);
