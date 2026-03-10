@@ -11,7 +11,11 @@
             <details class="reply-details board-search-details" @if(!empty($searchQuery)) open @endif>
                 <summary class="board-search-summary">
                     <span class="muted board-description board-search-label">{{ $board->display_description }}</span>
-                    <span class="button secondary board-search-trigger">{{ __('ui.search') }}</span>
+                    <span
+                        class="button secondary board-search-trigger"
+                        title="{{ __('ui.search_in_board') }}"
+                        aria-label="{{ __('ui.search_in_board') }}"
+                    ><span class="sr-only">{{ __('ui.search_in_board') }}</span></span>
                 </summary>
                 <form method="GET" action="{{ route('boards.show', ['board' => $board->slug]) }}" class="row wrap board-search-form">
                     <input id="board-search" type="search" name="q" value="{{ $searchQuery ?? '' }}" placeholder="{{ __('ui.search_placeholder') }}" minlength="{{ $minSearchLength ?? 2 }}">

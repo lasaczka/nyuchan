@@ -563,6 +563,7 @@ input, textarea, select {
   font: inherit;
 }
 textarea { min-height: 8rem; resize: vertical; }
+label { font-weight: 600; display: block; margin-bottom: .25rem; }
 
 input:focus,
 textarea:focus,
@@ -611,11 +612,13 @@ button.danger, .button.danger {
 .reply-details > summary::-webkit-details-marker {
   display: none;
 }
-.reply-details[open] > summary {
+.reply-details:not(.board-search-details)[open] > summary.button,
+.reply-details:not(.board-search-details)[open] > summary {
   margin-bottom: .75rem;
-  background: var(--accent-2);
-  color: var(--text);
-  border-color: var(--accent);
+  background: var(--accent-2) !important;
+  color: #1a2433 !important;
+  border-color: var(--accent) !important;
+  text-shadow: none !important;
 }
 .thread-form-card {
   position: relative;
@@ -669,6 +672,35 @@ button.danger, .button.danger {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  width: 2.65rem;
+  min-width: 2.65rem;
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.board-search-trigger::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  background-color: currentColor;
+  -webkit-mask: url("../icons/search.svg") center / contain no-repeat;
+  mask: url("../icons/search.svg") center / contain no-repeat;
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .board-search-form input[type="search"] {
   flex: 1 1 14rem;
