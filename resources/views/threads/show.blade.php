@@ -26,7 +26,7 @@
         @endif
 
         <div class="card" id="post-form">
-            <details class="reply-details" @if($errors->any()) open @endif>
+            <details class="reply-details" @if($errors->any() || $quotePostId) open @endif>
                 <summary class="button">{{ __('ui.post_reply_go_form') }}</summary>
                 <form method="POST" action="{{ route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="stack" enctype="multipart/form-data">
                     @csrf

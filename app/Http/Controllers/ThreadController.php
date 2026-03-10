@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PostMarkup;
 use App\Models\Board;
 use App\Models\Post;
 use App\Models\PostAttachment;
 use App\Models\Thread;
 use App\Services\AttachmentStorage;
+use App\Services\PostMacroService;
 use App\Services\PostDeleteReasonService;
 use App\Services\PostFormatter;
 use App\Services\QuoteLinkResolver;
 use App\Services\ThreadFavoritesService;
 use App\Support\PostingGuard;
+use App\ValueObjects\AttachmentUploadLimits;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cookie;
@@ -21,15 +22,13 @@ use Illuminate\Support\Str;
 
 class ThreadController extends Controller
 {
-    private const string MACRO_REPLY = 'reply';
-    private const string MACRO_GREENTEXT = 'greentext';
-
     public function __construct(
         private readonly AttachmentStorage $attachments,
         private readonly PostFormatter $formatter,
         private readonly QuoteLinkResolver $quoteLinkResolver,
         private readonly ThreadFavoritesService $threadFavorites,
         private readonly PostDeleteReasonService $deleteReasonService,
+        private readonly PostMacroService $postMacro,
     ) {
     }
 
@@ -92,11 +91,7 @@ class ThreadController extends Controller
 
     public function store(Request $request, Board $board)
     {
-        $imageMaxKb = max(1, (int) floor(((int) config('nyuchan.attachments_input_max_bytes', 8 * 1024 * 1024)) / 1024));
-        $maxFiles = max(1, (int) config('nyuchan.attachments_max_files', 4));
-        $phpUploadMax = $this->formatIniSizeToBytes((string) ini_get('upload_max_filesize'));
-        $phpPostMax = $this->formatIniSizeToBytes((string) ini_get('post_max_size'));
-        $phpEffectiveMax = max(1, min($phpUploadMax, $phpPostMax));
+        $uploadLimits = AttachmentUploadLimits::fromRuntime();
 
         if ($macroResponse = $this->macroInsertResponse($request)) {
             return $macroResponse;
@@ -106,12 +101,12 @@ class ThreadController extends Controller
             'title' => ['required', 'string', 'max:140'],
             'body' => ['required', 'string', 'max:5000'],
             'use_display_name' => ['nullable', 'boolean'],
-            'images' => ['nullable', 'array', 'max:'.$maxFiles],
-            'images.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$imageMaxKb],
+            'images' => ['nullable', 'array', 'max:'.$uploadLimits->maxFiles()],
+            'images.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$uploadLimits->imageMaxKb()],
         ], [
-            'images.max' => __('ui.image_max_files', ['count' => $maxFiles]),
-            'images.*.uploaded' => __('ui.image_upload_failed_php', ['size' => $this->formatBytes($phpEffectiveMax)]),
-            'images.*.max' => __('ui.image_too_large_input', ['size' => $this->formatBytes($imageMaxKb * 1024)]),
+            'images.max' => __('ui.image_max_files', ['count' => $uploadLimits->maxFiles()]),
+            'images.*.uploaded' => __('ui.image_upload_failed_php', ['size' => $uploadLimits->phpEffectiveMaxLabel()]),
+            'images.*.max' => __('ui.image_too_large_input', ['size' => $uploadLimits->imageMaxLabel()]),
         ]);
 
         $abuseId = PostingGuard::abuseId($request->user()?->id);
@@ -196,54 +191,17 @@ class ThreadController extends Controller
             return null;
         }
 
-        $macro = $this->resolveMacroTemplate($insertMacro);
+        $macro = $this->postMacro->resolveTemplate($insertMacro);
         if ($macro === null) {
             return null;
         }
 
         $body = (string) $request->input('body', '');
-        $separator = $body !== '' && ! str_ends_with($body, "\n") ? "\n" : '';
 
         return back()->withInput(array_merge(
             $request->except('insert_macro'),
-            ['body' => $body.$separator.$macro]
+            ['body' => $this->postMacro->appendToBody($body, $macro)]
         ));
-    }
-
-    private function resolveMacroTemplate(string $insertMacro): ?string
-    {
-        return match ($insertMacro) {
-            self::MACRO_REPLY => '>>123 ',
-            self::MACRO_GREENTEXT => '>',
-            default => PostMarkup::templateFor($insertMacro),
-        };
-    }
-
-    private function formatIniSizeToBytes(string $value): int
-    {
-        $v = trim($value);
-        if ($v === '') {
-            return 0;
-        }
-
-        $unit = strtolower(substr($v, -1));
-        $num = (float) $v;
-
-        return (int) match ($unit) {
-            'g' => $num * 1024 * 1024 * 1024,
-            'm' => $num * 1024 * 1024,
-            'k' => $num * 1024,
-            default => (int) $num,
-        };
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes >= 1024 * 1024) {
-            return rtrim(rtrim(number_format($bytes / (1024 * 1024), 2, '.', ''), '0'), '.').' MB';
-        }
-
-        return rtrim(rtrim(number_format($bytes / 1024, 2, '.', ''), '0'), '.').' KB';
     }
 
     private function enforceThreadLimit(Board $board, int $newThreadId): void

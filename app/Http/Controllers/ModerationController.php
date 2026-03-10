@@ -73,10 +73,7 @@ class ModerationController extends Controller
         abort_unless($user && $user->canBanUsers(), 403);
         abort_unless($thread->board_id === $board->id && $post->thread_id === $thread->id, 404);
 
-        $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:'.self::BAN_REASON_MAX_LENGTH],
-            'minutes' => ['required', 'integer', 'min:'.self::BAN_MINUTES_MIN, 'max:'.self::BAN_MINUTES_MAX],
-        ]);
+        $data = $this->validateBanPayload($request);
 
         [$targetAbuseId, $banErrorKey] = $this->resolveAndValidateTargetAbuseId($post->meta?->abuse_id, (int) $user->id);
         if (! $targetAbuseId) {
@@ -142,10 +139,7 @@ class ModerationController extends Controller
         abort_unless($user && $user->canBanUsers(), 403);
         abort_unless($thread->board_id === $board->id, 404);
 
-        $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:'.self::BAN_REASON_MAX_LENGTH],
-            'minutes' => ['required', 'integer', 'min:'.self::BAN_MINUTES_MIN, 'max:'.self::BAN_MINUTES_MAX],
-        ]);
+        $data = $this->validateBanPayload($request);
 
         $op = $thread->posts()->with('meta')->orderBy('id')->first();
         [$targetAbuseId, $banErrorKey] = $this->resolveAndValidateTargetAbuseId($op?->meta?->abuse_id, (int) $user->id);
@@ -204,5 +198,13 @@ class ModerationController extends Controller
         }
 
         return [$targetAbuseId, null];
+    }
+
+    private function validateBanPayload(Request $request): array
+    {
+        return $request->validate([
+            'reason' => ['nullable', 'string', 'max:'.self::BAN_REASON_MAX_LENGTH],
+            'minutes' => ['required', 'integer', 'min:'.self::BAN_MINUTES_MIN, 'max:'.self::BAN_MINUTES_MAX],
+        ]);
     }
 }

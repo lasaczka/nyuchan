@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserRecoveryKey;
+use App\ValueObjects\RecoveryKey;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,9 +43,9 @@ class RecoveryPasswordController extends Controller
                 return null;
             }
 
-            $normalizedInput = UserRecoveryKey::normalize($validated['recovery_key']);
+            $inputRecoveryKey = RecoveryKey::fromInput($validated['recovery_key']);
 
-            if (! hash_equals($recovery->key_hash, hash('sha256', $normalizedInput))) {
+            if (! hash_equals($recovery->key_hash, $inputRecoveryKey->hash())) {
                 return false;
             }
 
@@ -69,6 +70,6 @@ class RecoveryPasswordController extends Controller
 
         return redirect()->route('recovery.key.show')
             ->with('status', 'Password updated. Save your new recovery key.')
-            ->with('recovery_key', $newRecoveryKey);
+            ->with('recovery_key', $newRecoveryKey->value());
     }
 }

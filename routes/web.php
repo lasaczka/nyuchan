@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\ThreadFavoriteController;
+use App\Services\PostFormatter;
 use App\Services\UserPostRepliesService;
 use App\Models\Announcement;
 use App\Models\Board;
@@ -18,7 +19,7 @@ use App\Models\Thread;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
-Route::get('/', function (UserPostRepliesService $repliesService) {
+Route::get('/', function (UserPostRepliesService $repliesService, PostFormatter $postFormatter) {
     $replyNotice = null;
 
     if (! Schema::hasTable('boards')) {
@@ -103,6 +104,9 @@ Route::get('/', function (UserPostRepliesService $repliesService) {
             ->latest('id')
             ->limit(5)
             ->get()
+            ->each(function (Announcement $announcement) use ($postFormatter): void {
+                $announcement->rendered_body = $postFormatter->format((string) $announcement->body);
+            })
         : collect();
 
     $authUser = auth()->user();
@@ -149,6 +153,11 @@ Route::middleware('auth')->group(function () {
         ->name('mod.bans.unban');
     Route::post('/mod/tools', [ModPanelController::class, 'toggleUi'])
         ->name('mod.tools.toggle');
+    Route::post('/mod/invites/reusable', [ModPanelController::class, 'storeReusableInvite'])
+        ->name('mod.invites.reusable.store');
+    Route::post('/mod/invites/{invite}/revoke', [ModPanelController::class, 'revokeReusableInvite'])
+        ->whereNumber('invite')
+        ->name('mod.invites.reusable.revoke');
     Route::post('/mod/announcements', [ModPanelController::class, 'storeAnnouncement'])
         ->name('mod.announcements.store');
     Route::post('/mod/announcements/{announcement}/publish', [ModPanelController::class, 'publishAnnouncement'])

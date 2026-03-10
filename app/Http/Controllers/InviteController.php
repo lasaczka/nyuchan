@@ -38,10 +38,18 @@ class InviteController extends Controller
 
         $token = Str::random(32);
 
-        Invite::create([
+        $payload = [
             'token' => $token,
             'created_by_user_id' => $userId,
-        ]);
+        ];
+
+        if (Invite::supportsReusableColumns()) {
+            $payload['max_uses'] = 1;
+            $payload['uses_count'] = 0;
+            $payload['is_active'] = true;
+        }
+
+        Invite::create($payload);
 
         return back()->with('invite', url('/register?invite='.$token));
     }

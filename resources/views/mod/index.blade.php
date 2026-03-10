@@ -36,6 +36,63 @@
                     </select>
                     <button type="submit">{{ __('ui.save_settings') }}</button>
                 </form>
+
+                @if(auth()->user()?->canManageRoles())
+                    <hr>
+                    <h4>{{ __('ui.reusable_invites') }}</h4>
+                    @if($reusableInvitesAvailable ?? false)
+                        <form method="POST" action="{{ route('mod.invites.reusable.store') }}" class="mod-inline mod-inline-combined reusable-invite-form">
+                            @csrf
+                            <input type="number" name="max_uses" min="0" max="100000" placeholder="{{ __('ui.reusable_invite_max_uses') }}" class="reusable-invite-input">
+                            <input type="number" name="expires_in_minutes" min="1" max="525600" placeholder="{{ __('ui.reusable_invite_expires_minutes') }}" class="reusable-invite-input">
+                            <button type="submit">{{ __('ui.reusable_invite_create_short') }}</button>
+                        </form>
+                    @else
+                        <p class="muted">{{ __('ui.reusable_invites_unavailable') }}</p>
+                    @endif
+
+                    @if(($activeReusableInvites ?? collect())->isEmpty())
+                        <p class="muted">{{ __('ui.reusable_invites_empty') }}</p>
+                    @else
+                        <div class="table-scroll" style="margin-top:.65rem;">
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>{{ __('ui.invite_link') }}</th>
+                                        <th>{{ __('ui.mod_created_by') }}</th>
+                                        <th>{{ __('ui.reusable_invite_uses') }}</th>
+                                        <th>{{ __('ui.mod_until') }}</th>
+                                        <th>{{ __('ui.mod_actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($activeReusableInvites as $invite)
+                                        @php
+                                            $inviteUrl = url('/register?invite='.$invite->token);
+                                            $usesLabel = $invite->max_uses
+                                                ? ($invite->uses_count.' / '.$invite->max_uses)
+                                                : ($invite->uses_count.' / ∞');
+                                        @endphp
+                                        <tr>
+                                            <td>#{{ $invite->id }}</td>
+                                            <td><a href="{{ $inviteUrl }}">{{ $inviteUrl }}</a></td>
+                                            <td>{{ $invite->creator?->username ?? ('#'.$invite->created_by_user_id) }}</td>
+                                            <td>{{ $usesLabel }}</td>
+                                            <td>{{ $invite->expires_at ? $invite->expires_at->format('Y-m-d H:i') : __('ui.never') }}</td>
+                                            <td>
+                                                <form method="POST" action="{{ route('mod.invites.reusable.revoke', ['invite' => $invite->id]) }}">
+                                                    @csrf
+                                                    <button type="submit" class="secondary">{{ __('ui.reusable_invite_revoke') }}</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                @endif
             </div>
         @endif
 

@@ -116,5 +116,42 @@ class BoardAndThreadPagesTest extends TestCase
             'body' => 'op content',
         ]);
     }
-}
 
+    public function test_thread_reply_form_is_opened_when_quote_parameter_is_present(): void
+    {
+        $user = User::factory()->create();
+        $board = Board::query()->create([
+            'slug' => 'b',
+            'title' => 'Random',
+            'bump_limit' => 250,
+            'is_hidden' => false,
+            'post_rate_limit_count' => 3,
+            'post_rate_limit_window_seconds' => 60,
+        ]);
+        $thread = Thread::query()->create([
+            'board_id' => $board->id,
+            'title' => 'Thread quote open',
+            'bumped_at' => now(),
+            'is_locked' => false,
+            'owner_token_hash' => hash('sha256', 'owner-quote'),
+            'owner_token_issued_at' => now(),
+        ]);
+        $post = Post::query()->create([
+            'thread_id' => $thread->id,
+            'display_name' => null,
+            'display_color' => null,
+            'body' => 'post body',
+            'is_deleted' => false,
+            'is_sage' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('threads.show', ['board' => $board->slug, 'thread' => $thread->id, 'quote' => $post->id]));
+
+        $response->assertOk();
+        $this->assertMatchesRegularExpression(
+            '/<details class="reply-details"[^>]*\bopen\b[^>]*>/',
+            (string) $response->getContent()
+        );
+    }
+}

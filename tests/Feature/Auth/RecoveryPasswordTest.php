@@ -30,7 +30,7 @@ class RecoveryPasswordTest extends TestCase
 
         $response = $this->post('/recover-password', [
             'username' => 'recoverme',
-            'recovery_key' => $recoveryKey,
+            'recovery_key' => $recoveryKey->value(),
             'password' => 'new-password',
             'password_confirmation' => 'new-password',
         ]);

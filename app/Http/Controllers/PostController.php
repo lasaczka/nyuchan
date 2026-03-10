@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PostMarkup;
 use App\Models\Board;
 use App\Models\Post;
 use App\Models\PostAttachment;
 use App\Models\Thread;
 use App\Services\AttachmentStorage;
+use App\Services\PostMacroService;
 use App\Support\PostingGuard;
+use App\ValueObjects\AttachmentUploadLimits;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -16,19 +17,12 @@ use Illuminate\Support\Facades\Schema;
 
 class PostController extends Controller
 {
-    private const string MACRO_REPLY = 'reply';
-    private const string MACRO_GREENTEXT = 'greentext';
-
     private const int DEFAULT_POST_BODY_MAX_LENGTH = 5000;
-    private const int DEFAULT_ATTACHMENTS_INPUT_MAX_BYTES = 8 * 1024 * 1024;
-    private const int DEFAULT_ATTACHMENTS_MAX_FILES = 4;
-    private const int MIN_UPLOAD_KB = 1;
-    private const int BYTES_IN_KB = 1024;
-    private const int BYTES_IN_MB = 1024 * 1024;
-    private const int BYTES_IN_GB = 1024 * 1024 * 1024;
 
-    public function __construct(private readonly AttachmentStorage $attachments)
-    {
+    public function __construct(
+        private readonly AttachmentStorage $attachments,
+        private readonly PostMacroService $postMacro,
+    ) {
     }
 
     public function store(Request $request, Board $board, Thread $thread)
@@ -36,14 +30,7 @@ class PostController extends Controller
         abort_unless($thread->board_id === $board->id, 404);
         abort_if($thread->is_locked, 403);
         $bodyMaxLength = max(1, (int) config('nyuchan.post_body_max_length', self::DEFAULT_POST_BODY_MAX_LENGTH));
-        $imageMaxKb = max(
-            self::MIN_UPLOAD_KB,
-            (int) floor(((int) config('nyuchan.attachments_input_max_bytes', self::DEFAULT_ATTACHMENTS_INPUT_MAX_BYTES)) / self::BYTES_IN_KB)
-        );
-        $maxFiles = max(self::MIN_UPLOAD_KB, (int) config('nyuchan.attachments_max_files', self::DEFAULT_ATTACHMENTS_MAX_FILES));
-        $phpUploadMax = $this->formatIniSizeToBytes((string) ini_get('upload_max_filesize'));
-        $phpPostMax = $this->formatIniSizeToBytes((string) ini_get('post_max_size'));
-        $phpEffectiveMax = max(self::MIN_UPLOAD_KB, min($phpUploadMax, $phpPostMax));
+        $uploadLimits = AttachmentUploadLimits::fromRuntime();
 
         if ($macroResponse = $this->macroInsertResponse($request)) {
             return $macroResponse;
@@ -53,12 +40,12 @@ class PostController extends Controller
             'body' => ['required', 'string', 'max:'.$bodyMaxLength],
             'use_display_name' => ['nullable', 'boolean'],
             'sage' => ['nullable', 'boolean'],
-            'images' => ['nullable', 'array', 'max:'.$maxFiles],
-            'images.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$imageMaxKb],
+            'images' => ['nullable', 'array', 'max:'.$uploadLimits->maxFiles()],
+            'images.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$uploadLimits->imageMaxKb()],
         ], [
-            'images.max' => __('ui.image_max_files', ['count' => $maxFiles]),
-            'images.*.uploaded' => __('ui.image_upload_failed_php', ['size' => $this->formatBytes($phpEffectiveMax)]),
-            'images.*.max' => __('ui.image_too_large_input', ['size' => $this->formatBytes($imageMaxKb * self::BYTES_IN_KB)]),
+            'images.max' => __('ui.image_max_files', ['count' => $uploadLimits->maxFiles()]),
+            'images.*.uploaded' => __('ui.image_upload_failed_php', ['size' => $uploadLimits->phpEffectiveMaxLabel()]),
+            'images.*.max' => __('ui.image_too_large_input', ['size' => $uploadLimits->imageMaxLabel()]),
         ]);
 
         $abuseId = PostingGuard::abuseId($request->user()?->id);
@@ -130,54 +117,17 @@ class PostController extends Controller
             return null;
         }
 
-        $macro = $this->resolveMacroTemplate($insertMacro);
+        $macro = $this->postMacro->resolveTemplate($insertMacro);
         if ($macro === null) {
             return null;
         }
 
         $body = (string) $request->input('body', '');
-        $separator = $body !== '' && ! str_ends_with($body, "\n") ? "\n" : '';
 
         return back()->withInput(array_merge(
             $request->except('insert_macro'),
-            ['body' => $body.$separator.$macro]
+            ['body' => $this->postMacro->appendToBody($body, $macro)]
         ));
-    }
-
-    private function resolveMacroTemplate(string $insertMacro): ?string
-    {
-        return match ($insertMacro) {
-            self::MACRO_REPLY => '>>123 ',
-            self::MACRO_GREENTEXT => '>',
-            default => PostMarkup::templateFor($insertMacro),
-        };
-    }
-
-    private function formatIniSizeToBytes(string $value): int
-    {
-        $v = trim($value);
-        if ($v === '') {
-            return 0;
-        }
-
-        $unit = strtolower(substr($v, -1));
-        $num = (float) $v;
-
-        return (int) match ($unit) {
-            'g' => $num * self::BYTES_IN_GB,
-            'm' => $num * self::BYTES_IN_MB,
-            'k' => $num * self::BYTES_IN_KB,
-            default => (int) $num,
-        };
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes >= self::BYTES_IN_MB) {
-            return rtrim(rtrim(number_format($bytes / self::BYTES_IN_MB, 2, '.', ''), '0'), '.').' MB';
-        }
-
-        return rtrim(rtrim(number_format($bytes / self::BYTES_IN_KB, 2, '.', ''), '0'), '.').' KB';
     }
 
     private function supportsSageColumn(): bool

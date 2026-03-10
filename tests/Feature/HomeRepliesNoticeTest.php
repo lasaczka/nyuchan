@@ -57,8 +57,7 @@ class HomeRepliesNoticeTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee(__('ui.new_replies_title'))
-            ->assertSee((string) __('ui.new_replies_count', ['count' => 1]));
+            ->assertSee(__('ui.new_replies_title').' (1)');
 
         $this->actingAs($user)
             ->post(route('replies.mark_read'), ['max_reply_post_id' => $reply->id])
@@ -72,4 +71,3 @@ class HomeRepliesNoticeTest extends TestCase
             ->assertDontSee(__('ui.new_replies_title'));
     }
 }
-

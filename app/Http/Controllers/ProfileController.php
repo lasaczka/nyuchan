@@ -40,7 +40,7 @@ class ProfileController extends Controller
 
         $activeOwnInvites = Invite::query()
             ->where('created_by_user_id', $user->id)
-            ->whereNull('used_at')
+            ->active()
             ->latest('id');
 
         $lastUnusedInvite = $activeOwnInvites->first();
@@ -48,7 +48,7 @@ class ProfileController extends Controller
         $allActiveInvites = null;
         if ($role === Role::Admin) {
             $allActiveInvites = Invite::query()
-                ->whereNull('used_at')
+                ->active()
                 ->with(['creator:id,username'])
                 ->latest('id')
                 ->limit(300)

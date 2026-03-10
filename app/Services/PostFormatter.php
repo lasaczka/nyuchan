@@ -11,6 +11,7 @@ class PostFormatter
 
     private const string CLASS_QUOTE_BROKEN = 'post-quote-broken';
     private const string CLASS_QUOTE_LINK = 'post-quote-link';
+    private const string CLASS_GREENTEXT = 'greentext';
 
     public function format(string $body, ?callable $quoteResolver = null): string
     {
@@ -24,7 +25,7 @@ class PostFormatter
             $line = $this->applyInlineMarkup($line, $quoteResolver);
 
             if ($isGreentext) {
-                return '<span class="greentext">'.$line.'</span>';
+                return '<span class="'.self::CLASS_GREENTEXT.'">'.$line.'</span>';
             }
 
             return $line;

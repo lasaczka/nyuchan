@@ -104,7 +104,7 @@
                         @if($announcement->show_author && $announcement->creator)
                             <div class="muted">{{ __('ui.announcement_by', ['username' => $announcement->creator->username]) }}</div>
                         @endif
-                        <div style="margin-top:.35rem; white-space:pre-wrap;">{{ $announcement->body }}</div>
+                        <div class="post-body" style="margin-top:.35rem;">{!! $announcement->rendered_body ?? e((string) $announcement->body) !!}</div>
                     </li>
                 @endforeach
             </ul>

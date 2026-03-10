@@ -38,9 +38,9 @@ class RegisteredUserController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (! $invite || $invite->used_at !== null) {
+            if (! $invite || ! $invite->isRedeemable()) {
                 throw ValidationException::withMessages([
-                    'invite' => 'Invalid or already used invite code.',
+                    'invite' => 'Invalid, expired, or exhausted invite code.',
                 ]);
             }
 
@@ -50,10 +50,7 @@ class RegisteredUserController extends Controller
                 'role' => Role::User,
             ]);
 
-            $invite->update([
-                'used_at' => now(),
-                'used_by_user_id' => $user->id,
-            ]);
+            $invite->consumeFor($user);
 
             $recoveryKey = UserRecoveryKey::issueFor($user);
 
@@ -62,6 +59,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('recovery.key.show')->with('recovery_key', $recoveryKey);
+        return redirect()->route('recovery.key.show')->with('recovery_key', $recoveryKey->value());
     }
 }
