@@ -7,11 +7,26 @@
     </x-slot>
 
     <div class="stack">
-        @if($board->display_description)
-            <div class="card panel">
-                <p class="muted" style="margin:0;">{{ $board->display_description }}</p>
-            </div>
-        @endif
+        <div class="card panel">
+            <details class="reply-details board-search-details" @if(!empty($searchQuery)) open @endif>
+                <summary class="board-search-summary">
+                    <span class="muted board-description board-search-label">{{ $board->display_description }}</span>
+                    <span class="button secondary board-search-trigger">{{ __('ui.search') }}</span>
+                </summary>
+                <form method="GET" action="{{ route('boards.show', ['board' => $board->slug]) }}" class="row wrap board-search-form">
+                    <input id="board-search" type="search" name="q" value="{{ $searchQuery ?? '' }}" placeholder="{{ __('ui.search_placeholder') }}" minlength="{{ $minSearchLength ?? 2 }}">
+                    <button type="submit">{{ __('ui.search') }}</button>
+                    @if(!empty($searchQuery))
+                        <a class="button secondary" href="{{ route('boards.show', ['board' => $board->slug]) }}">{{ __('ui.search_reset') }}</a>
+                    @endif
+                </form>
+                @if(!empty($searchQuery) && empty($searchTooShort))
+                    <p class="muted board-search-caption">{{ __('ui.search_results_for', ['q' => $searchQuery]) }}</p>
+                @elseif(!empty($searchTooShort))
+                    <p class="muted board-search-caption">{{ __('ui.search_min_length', ['count' => $minSearchLength ?? 2]) }}</p>
+                @endif
+            </details>
+        </div>
 
         @if(auth()->user()?->canBanUsers() && $showModTools)
             <div class="card">
@@ -43,7 +58,7 @@
 
         <div class="card" id="thread-form">
             <details class="reply-details" @if($errors->any()) open @endif>
-                <summary class="button">{{ __('ui.thread_create_go_form') }}</summary>
+                <summary class="button create-thread-summary">{{ __('ui.thread_create_go_form') }}</summary>
                 <form method="POST" action="{{ route('threads.store', ['board' => $board->slug]) }}" class="stack" enctype="multipart/form-data">
                     @csrf
                     <div>
@@ -80,6 +95,55 @@
             </details>
         </div>
 
+        @if(!empty($searchQuery) && empty($searchTooShort))
+            <div class="card stack">
+                <h3>{{ __('ui.search_threads_title') }}</h3>
+                @if(($searchTitleThreads?->total() ?? 0) === 0)
+                    <p class="muted">{{ __('ui.search_no_results') }}</p>
+                @else
+                    <ul class="list">
+                        @foreach($searchTitleThreads as $thread)
+                            <li>
+                                <a href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $thread->id]) }}">
+                                    /{{ $board->slug }}/{{ $thread->id }} — {{ $thread->title }}
+                                </a>
+                                <span class="muted"> · {{ $thread->posts_count }} {{ __('ui.posts') }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                    @if($searchTitleThreads->hasPages())
+                        <div style="margin-top:.75rem;">
+                            {{ $searchTitleThreads->links() }}
+                        </div>
+                    @endif
+                @endif
+            </div>
+
+            <div class="card stack">
+                <h3>{{ __('ui.search_posts_title') }}</h3>
+                @if(($searchPosts?->total() ?? 0) === 0)
+                    <p class="muted">{{ __('ui.search_no_results') }}</p>
+                @else
+                    <ul class="list preview-list">
+                        @foreach($searchPosts as $post)
+                            <li>
+                                <div class="post-meta">
+                                    <a class="post-no" href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $post->thread_id]) }}#p{{ $post->id }}">#{{ $post->id }}</a>
+                                    <span>{{ __('ui.search_in_thread') }}</span>
+                                    <a href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $post->thread_id]) }}">{{ $post->thread?->title ?: ('#'.$post->thread_id) }}</a>
+                                </div>
+                                <div class="post-body" style="margin-top:.35rem;">{!! $post->search_snippet !!}</div>
+                            </li>
+                        @endforeach
+                    </ul>
+                    @if($searchPosts->hasPages())
+                        <div style="margin-top:.75rem;">
+                            {{ $searchPosts->links() }}
+                        </div>
+                    @endif
+                @endif
+            </div>
+        @else
         <div class="stack">
             @forelse($threads as $thread)
                 @php
@@ -109,7 +173,11 @@
                                     <div class="post-meta">
                                         <a class="post-no" href="{{ route('threads.show', ['board' => $board->slug, 'thread' => $thread->id]) }}#p{{ $post->id }}">#{{ $post->id }}</a>
                                         <span>{{ __('ui.by') }}</span>
-                                        <span class="post-author" @if($post->display_name && $post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: __('ui.anonymous') }}</span>
+                                        @if($post->tripcode && ! $post->display_name)
+                                            <span class="post-identity"><span class="post-author">{{ $board->display_anonymous_name }}</span><span class="post-tripcode" @if($post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->tripcode }}</span></span>
+                                        @else
+                                            <span class="post-author" @if($post->display_color) style="color: {{ $post->display_color }};" @endif>{{ $post->display_name ?: $board->display_anonymous_name }}@if($post->tripcode){{ $post->tripcode }}@endif</span>
+                                        @endif
                                         @if($post->created_at)
                                             @php
                                                 $postTimeLabel = mb_convert_case($post->created_at->locale(app()->getLocale())->isoFormat('DD/MM/YY ddd HH:mm:ss'), MB_CASE_TITLE, 'UTF-8');
@@ -191,15 +259,18 @@
                 </div>
             @endforelse
         </div>
+        @endif
 
-        @if($threads->count() > 1)
+        @if(empty($searchQuery) && $threads->count() > 1)
             <div class="card panel" style="text-align:center;">
                 <a class="button secondary" href="#thread-form">{{ __('ui.to_top') }}</a>
             </div>
         @endif
 
-        <div>
-            {{ $threads->links() }}
-        </div>
+        @if(empty($searchQuery))
+            <div>
+                {{ $threads->links() }}
+            </div>
+        @endif
     </div>
 </x-app-layout>

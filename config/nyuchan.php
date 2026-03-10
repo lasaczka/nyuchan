@@ -28,6 +28,9 @@ return [
         'profile_favorites_per_page' => (int) env('PAGINATION_PROFILE_FAVORITES_PER_PAGE', 50),
         'profile_replies_per_page' => (int) env('PAGINATION_PROFILE_REPLIES_PER_PAGE', 10),
     ],
+    'search' => [
+        'min_query_length' => (int) env('SEARCH_MIN_QUERY_LENGTH', 2),
+    ],
 
     'profile_colors' => [
         '#ff6fb0' => 'ui.color_rose',

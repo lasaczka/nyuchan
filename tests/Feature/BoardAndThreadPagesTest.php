@@ -150,8 +150,86 @@ class BoardAndThreadPagesTest extends TestCase
 
         $response->assertOk();
         $this->assertMatchesRegularExpression(
-            '/<details class="reply-details"[^>]*\bopen\b[^>]*>/',
+            '/<details class="[^"]*\breply-details\b[^"]*"[^>]*\bopen\b[^>]*>/',
             (string) $response->getContent()
         );
+    }
+
+    public function test_board_search_filters_threads_by_title_and_post_body(): void
+    {
+        $user = User::factory()->create();
+        $board = Board::query()->create([
+            'slug' => 'b',
+            'title' => 'Random',
+            'bump_limit' => 250,
+            'is_hidden' => false,
+            'post_rate_limit_count' => 3,
+            'post_rate_limit_window_seconds' => 60,
+        ]);
+
+        $threadByTitle = Thread::query()->create([
+            'board_id' => $board->id,
+            'title' => 'Linux tips',
+            'bumped_at' => now(),
+            'is_locked' => false,
+            'owner_token_hash' => hash('sha256', 'owner-search-title'),
+            'owner_token_issued_at' => now(),
+        ]);
+        Post::query()->create([
+            'thread_id' => $threadByTitle->id,
+            'display_name' => null,
+            'display_color' => null,
+            'body' => 'op',
+            'is_deleted' => false,
+            'is_sage' => false,
+        ]);
+
+        $threadByBody = Thread::query()->create([
+            'board_id' => $board->id,
+            'title' => 'Random chat',
+            'bumped_at' => now(),
+            'is_locked' => false,
+            'owner_token_hash' => hash('sha256', 'owner-search-body'),
+            'owner_token_issued_at' => now(),
+        ]);
+        Post::query()->create([
+            'thread_id' => $threadByBody->id,
+            'display_name' => null,
+            'display_color' => null,
+            'body' => 'kernel panic',
+            'is_deleted' => false,
+            'is_sage' => false,
+        ]);
+
+        $threadNoMatch = Thread::query()->create([
+            'board_id' => $board->id,
+            'title' => 'Cooking',
+            'bumped_at' => now(),
+            'is_locked' => false,
+            'owner_token_hash' => hash('sha256', 'owner-search-none'),
+            'owner_token_issued_at' => now(),
+        ]);
+        Post::query()->create([
+            'thread_id' => $threadNoMatch->id,
+            'display_name' => null,
+            'display_color' => null,
+            'body' => 'recipe',
+            'is_deleted' => false,
+            'is_sage' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('boards.show', ['board' => $board->slug, 'q' => 'kernel']))
+            ->assertOk()
+            ->assertSee('Random chat')
+            ->assertDontSee('Linux tips')
+            ->assertDontSee('Cooking');
+
+        $this->actingAs($user)
+            ->get(route('boards.show', ['board' => $board->slug, 'q' => 'linux']))
+            ->assertOk()
+            ->assertSee('Linux tips')
+            ->assertDontSee('Random chat')
+            ->assertDontSee('Cooking');
     }
 }
