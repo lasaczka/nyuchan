@@ -223,6 +223,7 @@ return [
     'mod_tab_bans' => 'Bans',
     'mod_tab_log' => 'Log',
     'mod_users_roles' => 'Users and roles',
+    'mod_users_count' => 'Users: :count',
     'mod_username' => 'User',
     'mod_role' => 'Role',
     'mod_actions' => 'Actions',

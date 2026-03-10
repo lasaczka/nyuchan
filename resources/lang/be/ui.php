@@ -223,6 +223,7 @@ return [
     'mod_tab_bans' => 'Баны',
     'mod_tab_log' => 'Лог',
     'mod_users_roles' => 'Карыстальнікі і ролі',
+    'mod_users_count' => 'Карыстальнікаў: :count',
     'mod_username' => 'Карыстальнік',
     'mod_role' => 'Роля',
     'mod_actions' => 'Дзеяньні',

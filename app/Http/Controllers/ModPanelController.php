@@ -30,7 +30,11 @@ class ModPanelController extends Controller
         $requestedTab = (string) $request->query('tab', 'tools');
         $activeTab = in_array($requestedTab, self::AVAILABLE_TABS, true) ? $requestedTab : 'tools';
 
-        $users = User::query()->orderBy('username')->get(['id', 'username', 'role']);
+        $usersPerPage = max(1, (int) config('nyuchan.pagination.mod_users_per_page', 10));
+        $users = User::query()
+            ->orderBy('username')
+            ->paginate($usersPerPage, ['id', 'username', 'role'], 'users_page')
+            ->withQueryString();
 
         $activeBans = Ban::query()
             ->where(function ($query) {

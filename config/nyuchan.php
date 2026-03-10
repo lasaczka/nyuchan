@@ -23,6 +23,7 @@ return [
         'admin' => null,
     ],
     'pagination' => [
+        'mod_users_per_page' => (int) env('PAGINATION_MOD_USERS_PER_PAGE', 10),
         'mod_announcements_per_page' => (int) env('PAGINATION_MOD_ANNOUNCEMENTS_PER_PAGE', 5),
         'profile_favorites_per_page' => (int) env('PAGINATION_PROFILE_FAVORITES_PER_PAGE', 50),
         'profile_replies_per_page' => (int) env('PAGINATION_PROFILE_REPLIES_PER_PAGE', 10),

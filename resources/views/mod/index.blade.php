@@ -99,6 +99,7 @@
         @if(($activeTab ?? 'tools') === 'users')
             <div class="card">
                 <h3>{{ __('ui.mod_users_roles') }}</h3>
+                <p class="muted">{{ __('ui.mod_users_count', ['count' => $users->total()]) }}</p>
                 <div class="table-scroll">
                 <table class="stats-table">
                     <thead>
@@ -134,6 +135,11 @@
                     </tbody>
                 </table>
                 </div>
+                @if($users->hasPages())
+                    <div style="margin-top:.75rem;">
+                        {{ $users->links() }}
+                    </div>
+                @endif
             </div>
         @endif
 

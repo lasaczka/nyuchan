@@ -223,6 +223,7 @@ return [
     'mod_tab_bans' => 'Баны',
     'mod_tab_log' => 'Лог',
     'mod_users_roles' => 'Пользователи и роли',
+    'mod_users_count' => 'Пользователей: :count',
     'mod_username' => 'Пользователь',
     'mod_role' => 'Роль',
     'mod_actions' => 'Действия',
