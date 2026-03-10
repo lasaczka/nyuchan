@@ -22,7 +22,7 @@ class PostFormatter
             $trimmed = ltrim($line);
             $isGreentext = str_starts_with($trimmed, '&gt;') && ! str_starts_with($trimmed, '&gt;&gt;');
 
-            $line = $this->applyInlineMarkup($line, $quoteResolver);
+            $line = $this->applyQuoteLinks($line, $quoteResolver);
 
             if ($isGreentext) {
                 return '<span class="'.self::CLASS_GREENTEXT.'">'.$line.'</span>';
@@ -31,7 +31,19 @@ class PostFormatter
             return $line;
         }, $lines);
 
-        return implode('<br>', $rendered);
+        $html = implode('<br>', $rendered);
+
+        foreach (PostMarkup::cases() as $markup) {
+            $html = $this->applyWrappedMarkup(
+                $html,
+                $markup->pattern(),
+                $markup->delimiter(),
+                $markup->tag(),
+                $markup->cssClass()
+            );
+        }
+
+        return $html;
     }
 
     public function extractQuoteIds(array $bodies): array
@@ -53,7 +65,7 @@ class PostFormatter
         return array_keys($ids);
     }
 
-    private function applyInlineMarkup(string $line, ?callable $quoteResolver): string
+    private function applyQuoteLinks(string $line, ?callable $quoteResolver): string
     {
         $line = preg_replace_callback(self::QUOTE_RENDER_PATTERN, function (array $m) use ($quoteResolver): string {
             $postId = (int) $m[1];
@@ -71,16 +83,6 @@ class PostFormatter
 
             return '<a class="'.self::CLASS_QUOTE_LINK.'" href="'.e((string) $resolved['href']).'"'.$target.'>&gt;&gt;'.$postId.$suffix.'</a>';
         }, $line) ?? $line;
-
-        foreach (PostMarkup::cases() as $markup) {
-            $line = $this->applyWrappedMarkup(
-                $line,
-                $markup->pattern(),
-                $markup->delimiter(),
-                $markup->tag(),
-                $markup->cssClass()
-            );
-        }
 
         return $line;
     }
