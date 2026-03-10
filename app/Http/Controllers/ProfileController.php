@@ -70,6 +70,12 @@ class ProfileController extends Controller
         $favoriteThreads->appends(['tab' => 'favorites']);
 
         $repliesToMyPosts = $this->userPostReplies->findRepliesForUser($user, 120);
+        if ($activeTab === 'favorites' && $repliesToMyPosts->isNotEmpty()) {
+            $latestReplyPostId = (int) max($repliesToMyPosts->pluck('reply_post_id')->all());
+            if ((int) ($user->last_seen_reply_post_id ?? 0) < $latestReplyPostId) {
+                $user->forceFill(['last_seen_reply_post_id' => $latestReplyPostId])->save();
+            }
+        }
         $repliesPage = max(1, (int) $request->query('replies_page', 1));
         $repliesPaginator = new LengthAwarePaginator(
             $repliesToMyPosts->forPage($repliesPage, $repliesPerPage)->values(),

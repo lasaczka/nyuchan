@@ -126,12 +126,12 @@
             </div>
 
             <div class="card stack">
-                <h3>Username</h3>
+                <h3>{{ __('ui.username') }}</h3>
                 <form method="POST" action="{{ route('profile.update') }}" class="stack">
                     @csrf
                     @method('PATCH')
                     <div>
-                        <label for="username">Username</label>
+                        <label for="username">{{ __('ui.username') }}</label>
                         <input id="username" type="text" name="username" value="{{ old('username', $user->username) }}" required>
                         @error('username')<div class="error">{{ $message }}</div>@enderror
                     </div>
@@ -147,44 +147,44 @@
                         </select>
                         @error('profile_color')<div class="error">{{ $message }}</div>@enderror
                     </div>
-                    <button type="submit">Save</button>
+                    <button type="submit">{{ __('ui.save') }}</button>
                 </form>
             </div>
 
             <div class="card stack">
-                <h3>Change password</h3>
+                <h3>{{ __('ui.change_password') }}</h3>
                 <form method="POST" action="{{ route('password.update') }}" class="stack">
                     @csrf
                     @method('PUT')
                     <div>
-                        <label for="current_password">Current password</label>
+                        <label for="current_password">{{ __('ui.current_password') }}</label>
                         <input id="current_password" type="password" name="current_password" required>
                         @if($errors->updatePassword->has('current_password'))<div class="error">{{ $errors->updatePassword->first('current_password') }}</div>@endif
                     </div>
                     <div>
-                        <label for="password">New password</label>
+                        <label for="password">{{ __('ui.new_password') }}</label>
                         <input id="password" type="password" name="password" required>
                         @if($errors->updatePassword->has('password'))<div class="error">{{ $errors->updatePassword->first('password') }}</div>@endif
                     </div>
                     <div>
-                        <label for="password_confirmation">Confirm password</label>
+                        <label for="password_confirmation">{{ __('ui.confirm_password') }}</label>
                         <input id="password_confirmation" type="password" name="password_confirmation" required>
                     </div>
-                    <button type="submit">Update password</button>
+                    <button type="submit">{{ __('ui.update_password') }}</button>
                 </form>
             </div>
 
             <div class="card stack">
-                <h3>Delete account</h3>
+                <h3>{{ __('ui.delete_account') }}</h3>
                 <form method="POST" action="{{ route('profile.destroy') }}" class="stack">
                     @csrf
                     @method('DELETE')
                     <div>
-                        <label for="delete_password">Password</label>
+                        <label for="delete_password">{{ __('ui.password') }}</label>
                         <input id="delete_password" type="password" name="password" required>
                         @if($errors->userDeletion->has('password'))<div class="error">{{ $errors->userDeletion->first('password') }}</div>@endif
                     </div>
-                    <button type="submit" class="danger">Delete account</button>
+                    <button type="submit" class="danger">{{ __('ui.delete_account') }}</button>
                 </form>
             </div>
         @endif

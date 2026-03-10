@@ -40,6 +40,7 @@ class PostController extends Controller
             'body' => ['required', 'string', 'max:'.$bodyMaxLength],
             'use_display_name' => ['nullable', 'boolean'],
             'sage' => ['nullable', 'boolean'],
+            'strip_metadata' => ['nullable', 'boolean'],
             'images' => ['nullable', 'array', 'max:'.$uploadLimits->maxFiles()],
             'images.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp', 'max:'.$uploadLimits->imageMaxKb()],
         ], [
@@ -74,7 +75,7 @@ class PostController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images', []) as $imageFile) {
                     if ($imageFile instanceof UploadedFile) {
-                        $this->createAttachment($post, $imageFile);
+                        $this->createAttachment($post, $imageFile, ! empty($data['strip_metadata']));
                     }
                 }
             }
@@ -92,9 +93,9 @@ class PostController extends Controller
         ])->withFragment('p'.$post->id);
     }
 
-    private function createAttachment(Post $post, UploadedFile $file): void
+    private function createAttachment(Post $post, UploadedFile $file, bool $stripMetadata): void
     {
-        $stored = $this->attachments->storeUploadedFile($file);
+        $stored = $this->attachments->storeUploadedFile($file, $stripMetadata);
 
         PostAttachment::create([
             'post_id' => $post->id,

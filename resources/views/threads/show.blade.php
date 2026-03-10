@@ -47,6 +47,10 @@
                     <div>
                         <label for="images">{{ __('ui.image_optional') }}</label>
                         <input id="images" name="images[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                        <label class="row" style="gap:.45rem; align-items:center; margin-top:.45rem;">
+                            <input type="checkbox" name="strip_metadata" value="1" style="width:auto;" {{ old('strip_metadata') ? 'checked' : '' }}>
+                            <span>{{ __('ui.strip_metadata') }}</span>
+                        </label>
                         <div class="muted format-help">{{ __('ui.image_policy') }}</div>
                         @error('images')<div class="error">{{ $message }}</div>@enderror
                         @if($errors->has('images.*'))<div class="error">{{ $errors->first('images.*') }}</div>@endif

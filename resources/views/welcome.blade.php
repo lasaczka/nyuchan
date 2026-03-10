@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon/favicon-16x16.png') }}">
     <link rel="icon" href="{{ asset('favicon/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v={{ @filemtime(public_path('css/site.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v={{ config('app.version') }}">
 </head>
 <body>
 @include('layouts.navigation')

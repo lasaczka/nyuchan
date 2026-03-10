@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class AttachmentStorage
 {
+    private const array METADATA_STRIPPABLE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+
     public function disk(): string
     {
         return (string) config('nyuchan.attachments_disk', config('filesystems.default', 'local'));
@@ -47,7 +49,7 @@ class AttachmentStorage
         return false;
     }
 
-    public function storeUploadedFile(UploadedFile $file): array
+    public function storeUploadedFile(UploadedFile $file, bool $stripMetadata = false): array
     {
         $disk = $this->disk();
         $inputMax = max(1, (int) config('nyuchan.attachments_input_max_bytes', 8 * 1024 * 1024));
@@ -63,7 +65,20 @@ class AttachmentStorage
 
         $mime = $file->getMimeType() ?: 'application/octet-stream';
         $pathForStorage = $sourcePath;
-        $tempPath = null;
+        $tempPaths = [];
+
+        if ($stripMetadata && in_array($mime, self::METADATA_STRIPPABLE_MIMES, true)) {
+            $strippedPath = $this->stripMetadataToPath($sourcePath, $mime);
+            if (! $strippedPath) {
+                throw ValidationException::withMessages([
+                    'image' => __('ui.metadata_strip_failed'),
+                ]);
+            }
+
+            $tempPaths[] = $strippedPath;
+            $pathForStorage = $strippedPath;
+            $sourceSize = (int) File::size($pathForStorage);
+        }
 
         if ($sourceSize > $targetMax) {
             if (! in_array($mime, config('nyuchan.attachments_auto_compress_mimes', []), true)) {
@@ -78,14 +93,14 @@ class AttachmentStorage
                 ]);
             }
 
-            $compressedPath = $this->compressToJpegPath($sourcePath, $mime, $targetMax);
+            $compressedPath = $this->compressToJpegPath($pathForStorage, $mime, $targetMax);
             if (! $compressedPath) {
                 throw ValidationException::withMessages([
                     'image' => __('ui.image_too_large_target', ['size' => $this->formatBytes($targetMax)]),
                 ]);
             }
 
-            $tempPath = $compressedPath;
+            $tempPaths[] = $compressedPath;
             $pathForStorage = $compressedPath;
             $mime = 'image/jpeg';
         }
@@ -119,8 +134,10 @@ class AttachmentStorage
             }
         }
 
-        if ($tempPath && is_file($tempPath)) {
-            @unlink($tempPath);
+        foreach ($tempPaths as $tempPath) {
+            if (is_string($tempPath) && is_file($tempPath)) {
+                @unlink($tempPath);
+            }
         }
 
         return [
@@ -259,6 +276,44 @@ class AttachmentStorage
         imagedestroy($src);
 
         if (! $ok || (int) File::size($tmp) > $targetMax) {
+            @unlink($tmp);
+
+            return null;
+        }
+
+        return $tmp;
+    }
+
+    private function stripMetadataToPath(string $sourcePath, string $mime): ?string
+    {
+        $src = match ($mime) {
+            'image/jpeg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($sourcePath) : false,
+            'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($sourcePath) : false,
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
+            default => false,
+        };
+
+        if (! $src) {
+            return null;
+        }
+
+        $tmp = tempnam(sys_get_temp_dir(), 'nyu_strip_');
+        if (! is_string($tmp) || $tmp === '') {
+            imagedestroy($src);
+
+            return null;
+        }
+
+        $ok = match ($mime) {
+            'image/jpeg' => function_exists('imagejpeg') ? @imagejpeg($src, $tmp, 92) : false,
+            'image/png' => function_exists('imagepng') ? @imagepng($src, $tmp, 6) : false,
+            'image/webp' => function_exists('imagewebp') ? @imagewebp($src, $tmp, 90) : false,
+            default => false,
+        };
+
+        imagedestroy($src);
+
+        if (! $ok || ! is_file($tmp) || (int) File::size($tmp) <= 0) {
             @unlink($tmp);
 
             return null;

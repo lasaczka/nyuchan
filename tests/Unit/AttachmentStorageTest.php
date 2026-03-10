@@ -98,4 +98,20 @@ class AttachmentStorageTest extends TestCase
         $this->assertLessThanOrEqual(100 * 1024, $stored['size']);
         Storage::disk('local')->assertExists($stored['path']);
     }
+
+    public function test_store_uploaded_file_can_strip_metadata_when_requested(): void
+    {
+        Storage::fake('local');
+        config()->set('nyuchan.attachments_disk', 'local');
+        config()->set('nyuchan.attachments_input_max_bytes', 5 * 1024 * 1024);
+        config()->set('nyuchan.attachments_target_max_bytes', 5 * 1024 * 1024);
+
+        $service = app(AttachmentStorage::class);
+        $upload = UploadedFile::fake()->image('meta.jpg', 64, 64);
+
+        $stored = $service->storeUploadedFile($upload, true);
+
+        $this->assertSame('image/jpeg', $stored['mime']);
+        Storage::disk('local')->assertExists($stored['path']);
+    }
 }
