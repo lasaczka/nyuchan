@@ -367,9 +367,45 @@ code { background: var(--code-bg); padding: .15rem .35rem; border-radius: 4px; }
     padding-right: 2rem;
   }
   .topbar .topbar-select-locale {
-    min-width: 5.2rem;
-    width: 5.2rem;
-    padding-right: 2rem;
+    min-width: 6rem;
+    width: auto;
+    max-width: 100%;
+    padding-right: 2.35rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .topbar-controls {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    row-gap: .45rem;
+  }
+  .topbar-controls .topbar-field:first-of-type,
+  .topbar-controls .topbar-field:last-of-type {
+    grid-column: 1;
+    justify-content: space-between;
+  }
+  .topbar-controls .topbar-field:first-of-type { grid-row: 1; }
+  .topbar-controls .topbar-field:last-of-type { grid-row: 2; }
+  .topbar-controls .topbar-apply {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .topbar .topbar-select-theme,
+  .topbar .topbar-select-locale {
+    width: auto;
+    min-width: 5.4rem;
+    max-width: 9.5rem;
+  }
+}
+
+/* iOS WebKit: native select arrow area is wider; avoid clipping current value */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 560px) {
+    .topbar .topbar-select-locale {
+      min-width: 6.4rem;
+      padding-right: 2.6rem;
+    }
   }
 }
 .theme-list a {
