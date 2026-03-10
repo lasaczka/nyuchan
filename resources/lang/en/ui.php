@@ -130,6 +130,7 @@ return [
     'post_reply_go_form' => 'Post reply',
     'post_send' => 'Send',
     'to_top' => 'Back to top',
+    'to_bottom' => 'To bottom',
     'thread_create_go_form' => 'Create thread',
     'post_with_name' => 'Name posting',
     'sage' => 'sage',

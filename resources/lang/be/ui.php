@@ -130,6 +130,7 @@ return [
     'post_reply_go_form' => 'Адказаць',
     'post_send' => 'Адправіць',
     'to_top' => 'Наверх',
+    'to_bottom' => 'Уніз',
     'thread_create_go_form' => 'Стварыць трэд',
     'post_with_name' => 'Нэйм-постынг',
     'sage' => 'sage',

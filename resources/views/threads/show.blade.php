@@ -25,8 +25,12 @@
             </div>
         @endif
 
-        <div class="card" id="post-form">
-            <details class="reply-details" @if($errors->any() || $quotePostId) open @endif>
+        <div class="card thread-form-card" id="post-form">
+            <a class="button secondary thread-down-button" href="#thread-bottom" title="{{ __('ui.to_bottom') }}">
+                <span class="thread-down-label-full">{{ __('ui.to_bottom') }}</span>
+                <span class="thread-down-label-mobile" aria-hidden="true">↓</span>
+            </a>
+            <details class="reply-details thread-reply-details" @if($errors->any() || $quotePostId) open @endif>
                 <summary class="button">{{ __('ui.post_reply_go_form') }}</summary>
                 <form method="POST" action="{{ route('posts.store', ['board' => $board->slug, 'thread' => $thread->id]) }}" class="stack" enctype="multipart/form-data">
                     @csrf
@@ -179,6 +183,7 @@
         </div>
 
         @if($posts->count() > 1)
+            <div id="thread-bottom"></div>
             <div class="card panel" style="text-align:center;">
                 <a class="button secondary" href="#post-form">{{ __('ui.to_top') }}</a>
             </div>

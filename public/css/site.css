@@ -434,6 +434,38 @@ button.danger, .button.danger {
   color: var(--text);
   border-color: var(--accent);
 }
+.thread-form-card {
+  position: relative;
+}
+.thread-reply-details {
+  display: inline-block;
+}
+.thread-down-button {
+  position: absolute;
+  top: .75rem;
+  right: .75rem;
+  white-space: nowrap;
+}
+.thread-down-label-mobile {
+  display: none;
+}
+@media (max-width: 560px) {
+  .thread-down-button {
+    min-width: 2.5rem;
+    padding-left: .75rem;
+    padding-right: .75rem;
+    text-align: center;
+  }
+  .thread-down-label-full {
+    display: none;
+  }
+  .thread-down-label-mobile {
+    display: inline;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
 
 .error { color: var(--danger); font-size: .9rem; margin-top: .25rem; }
 .notice {
