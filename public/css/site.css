@@ -563,7 +563,26 @@ input, textarea, select {
   font: inherit;
 }
 textarea { min-height: 8rem; resize: vertical; }
-label { font-weight: 600; display: block; margin-bottom: .25rem; }
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus,
+.button:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-2);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+.button:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-2);
+}
 
 
 button, .button {
@@ -834,6 +853,12 @@ input[type='radio'] {
   width: auto;
   height: 1rem;
   padding: 0;
+  accent-color: var(--accent);
+}
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
 }
 
 .thread-post .attachment-block {
@@ -1671,6 +1696,7 @@ html[data-theme='lelouch'] .button.danger {
   color: #fff;
   border-color: #b4324d;
 }
+
 
 
 
