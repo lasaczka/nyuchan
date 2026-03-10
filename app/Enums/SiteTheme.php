@@ -11,6 +11,7 @@ enum SiteTheme: string
     case Futaba = 'futaba';
     case Yotsuba = 'yotsuba';
     case Lelouch = 'lelouch';
+    case Virus = 'virus';
 
     public static function default(): self
     {
@@ -30,4 +31,3 @@ enum SiteTheme: string
         };
     }
 }
-
