@@ -4,10 +4,10 @@
     </x-slot>
 
     <div class="stack">
-        <div class="card">
-            <div class="row wrap">
-                <a class="button {{ $activeTab === 'favorites' ? '' : 'secondary' }}" href="{{ route('profile.edit', ['tab' => 'favorites']) }}">{{ __('ui.profile_tab_favorites') }}</a>
-                <a class="button {{ $activeTab === 'settings' ? '' : 'secondary' }}" href="{{ route('profile.edit', ['tab' => 'settings']) }}">{{ __('ui.profile_tab_settings') }}</a>
+        <div class="card mod-tabs">
+            <div class="row wrap" style="gap:.5rem;">
+                <a class="button secondary tab-link {{ $activeTab === 'favorites' ? 'is-active' : '' }}" href="{{ route('profile.edit', ['tab' => 'favorites']) }}">{{ __('ui.profile_tab_favorites') }}</a>
+                <a class="button secondary tab-link {{ $activeTab === 'settings' ? 'is-active' : '' }}" href="{{ route('profile.edit', ['tab' => 'settings']) }}">{{ __('ui.profile_tab_settings') }}</a>
             </div>
         </div>
 
