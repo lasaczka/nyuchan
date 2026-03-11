@@ -12,6 +12,7 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\ThreadFavoriteController;
 use App\Services\PostFormatter;
+use App\Services\QuoteLinkResolver;
 use App\Services\UserPostRepliesService;
 use App\Models\Announcement;
 use App\Models\Board;
@@ -19,7 +20,11 @@ use App\Models\Thread;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
-Route::get('/', function (UserPostRepliesService $repliesService, PostFormatter $postFormatter) {
+Route::get('/', function (
+    UserPostRepliesService $repliesService,
+    PostFormatter $postFormatter,
+    QuoteLinkResolver $quoteLinkResolver
+) {
     $replyNotice = null;
 
     if (! Schema::hasTable('boards')) {
@@ -104,10 +109,30 @@ Route::get('/', function (UserPostRepliesService $repliesService, PostFormatter 
             ->latest('id')
             ->limit(5)
             ->get()
-            ->each(function (Announcement $announcement) use ($postFormatter): void {
-                $announcement->rendered_body = $postFormatter->format((string) $announcement->body);
-            })
         : collect();
+
+    if ($announcements->isNotEmpty()) {
+        $quoteLinks = $quoteLinkResolver->buildQuoteLinks(
+            $postFormatter->extractQuoteIds($announcements->pluck('body')->all())
+        );
+
+        $announcements->each(function (Announcement $announcement) use ($postFormatter, $quoteLinks): void {
+            $announcement->rendered_body = $postFormatter->format(
+                (string) $announcement->body,
+                function (int $postId) use ($quoteLinks): ?array {
+                    $target = $quoteLinks[$postId] ?? null;
+
+                    if (! $target) {
+                        return null;
+                    }
+
+                    return [
+                        'href' => $target['href'],
+                    ];
+                }
+            );
+        });
+    }
 
     $authUser = auth()->user();
     if ($authUser) {
