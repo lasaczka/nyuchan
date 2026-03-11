@@ -90,4 +90,24 @@ class PostFormatterTest extends TestCase
             $html
         );
     }
+
+    public function test_leading_nbsp_are_preserved_as_non_breaking_spaces(): void
+    {
+        $formatter = app(PostFormatter::class);
+
+        $nbsp = "\u{00A0}";
+        $html = $formatter->format($nbsp.$nbsp."▲\n ▲ ▲");
+
+        $this->assertStringContainsString('&nbsp;&nbsp;▲<br> ▲ ▲', $html);
+    }
+
+    public function test_leading_narrow_no_break_space_is_preserved(): void
+    {
+        $formatter = app(PostFormatter::class);
+
+        $nnbsp = "\u{202F}";
+        $html = $formatter->format($nnbsp.$nnbsp."▲");
+
+        $this->assertSame('&nbsp;&nbsp;▲', $html);
+    }
 }

@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetLocaleFromSession::class,
         ]);
+        $middleware->trimStrings(except: [
+            'body',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -15,6 +15,7 @@ class PostFormatter
     private const string CLASS_QUOTE_BROKEN = 'post-quote-broken';
     private const string CLASS_QUOTE_LINK = 'post-quote-link';
     private const string CLASS_GREENTEXT = 'greentext';
+    private const string LEADING_NBSP_PATTERN = '/^([\x{00A0}\x{202F}\x{2007}\x{2060}\x{FEFF}]+)/u';
 
     public function format(string $body, ?callable $quoteResolver = null): string
     {
@@ -25,6 +26,7 @@ class PostFormatter
             $trimmed = ltrim($line);
             $isGreentext = str_starts_with($trimmed, '&gt;') && ! str_starts_with($trimmed, '&gt;&gt;');
 
+            $line = $this->preserveLeadingNbsp($line);
             $line = $this->applyExternalLinks($line);
             $line = $this->applyQuoteLinks($line, $quoteResolver);
 
@@ -48,6 +50,20 @@ class PostFormatter
         }
 
         return $html;
+    }
+
+    private function preserveLeadingNbsp(string $line): string
+    {
+        return preg_replace_callback(self::LEADING_NBSP_PATTERN, static function (array $matches): string {
+            $nbspRun = (string) ($matches[1] ?? '');
+            if ($nbspRun === '') {
+                return '';
+            }
+
+            $count = mb_strlen($nbspRun, 'UTF-8');
+
+            return str_repeat('&nbsp;', $count);
+        }, $line) ?? $line;
     }
 
     public function extractQuoteIds(array $bodies): array
