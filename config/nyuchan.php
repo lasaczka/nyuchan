@@ -31,6 +31,9 @@ return [
     'search' => [
         'min_query_length' => (int) env('SEARCH_MIN_QUERY_LENGTH', 2),
     ],
+    'tripcodes' => [
+        'algorithm' => (string) env('TRIPCODE_ALGORITHM', 'modern'),
+    ],
 
     'profile_colors' => [
         '#ff6fb0' => 'ui.color_rose',

@@ -129,6 +129,8 @@ return [
     'search_in_thread' => 'у трэдзе',
     'image' => 'Выява',
     'image_optional' => 'Выява (неабавязкова)',
+    'choose_files' => 'Абраць файлы',
+    'file_picker_hint' => 'Можна абраць некалькі файлаў.',
     'strip_metadata' => 'Прыбраць мэтадату',
     'image_policy' => 'Тыпы: JPG, PNG, GIF, WEBP. Максымум: 4 файлы. Уваходны ліміт: 20 MB. JPG/PNG/WEBP больш за 5 MB аўта-скарачаюцца да 5 MB. GIF не сьціскаецца.',
     'image_upload_failed' => 'Не ўдалося загрузіць файл.',

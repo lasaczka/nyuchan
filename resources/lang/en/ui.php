@@ -129,6 +129,8 @@ return [
     'search_in_thread' => 'in thread',
     'image' => 'Image',
     'image_optional' => 'Image (optional)',
+    'choose_files' => 'Browse files',
+    'file_picker_hint' => 'You can select multiple files.',
     'strip_metadata' => 'Strip metadata',
     'image_policy' => 'Types: JPG, PNG, GIF, WEBP. Maximum: 4 files. Input limit: 20 MB. JPG/PNG/WEBP above 5 MB are auto-compressed to 5 MB. GIF is not compressed.',
     'image_upload_failed' => 'Upload failed.',

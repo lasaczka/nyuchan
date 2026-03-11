@@ -129,6 +129,8 @@ return [
     'search_in_thread' => 'в треде',
     'image' => 'Изображение',
     'image_optional' => 'Изображение (необязательно)',
+    'choose_files' => 'Выбрать файлы',
+    'file_picker_hint' => 'Можно выбрать несколько файлов.',
     'strip_metadata' => 'Убрать метадату',
     'image_policy' => 'Типы: JPG, PNG, GIF, WEBP. Максимум: 4 файла. Входной лимит: 20 MB. JPG/PNG/WEBP больше 5 MB авто-сжимаются до 5 MB. GIF не сжимается.',
     'image_upload_failed' => 'Не удалось загрузить файл.',

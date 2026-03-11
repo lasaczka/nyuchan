@@ -624,7 +624,8 @@ button.danger, .button.danger {
   position: relative;
 }
 .thread-reply-details {
-  display: inline-block;
+  display: block;
+  width: 100%;
 }
 .thread-down-button {
   position: absolute;
@@ -708,6 +709,37 @@ button.danger, .button.danger {
 }
 .board-search-caption {
   margin: .5rem 0 0;
+}
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  flex-wrap: wrap;
+}
+.file-picker > label.button {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 400;
+}
+.file-input-native {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.file-input-native:focus + .button,
+.file-input-native:focus-visible + .button {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-2);
+}
+.file-picker-hint {
+  font-size: .92rem;
 }
 .board-search-details[open] > .board-search-summary {
   margin-bottom: .65rem;
@@ -794,6 +826,27 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
   background: var(--post-bg);
 }
 .list > li:first-child { border-top: 0; }
+.list > li[id^='p'] {
+  scroll-margin-top: 1rem;
+}
+
+@keyframes post-target-flash {
+  0% {
+    background: var(--panel-2);
+    outline: 2px solid var(--accent);
+    outline-offset: 0;
+  }
+  100% {
+    background: var(--post-bg);
+    outline: 2px solid transparent;
+    outline-offset: 0;
+  }
+}
+
+.list > li[id^='p']:target {
+  border-radius: 10px;
+  animation: post-target-flash 1.4s ease-out 1;
+}
 
 .stats-table {
   width: 100%;
@@ -924,6 +977,8 @@ input[type='radio']:focus-visible {
 
 .post-body {
   margin: .45rem 0 .2rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .post-body p {
   margin: 0;

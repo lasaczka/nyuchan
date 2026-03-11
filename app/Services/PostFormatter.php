@@ -8,6 +8,9 @@ class PostFormatter
 {
     private const string QUOTE_EXTRACT_PATTERN = '/>>(\d{1,10})/';
     private const string QUOTE_RENDER_PATTERN = '/&gt;&gt;(\d{1,10})/';
+    private const string EXTERNAL_URL_PATTERN = '/\bhttps?:\/\/[^\s<]+/iu';
+    private const string EXTERNAL_URL_TRAILING_TRIM_CHARS = '.,!?:;)]}';
+    private const string NON_URL_ENTITY_PATTERN = '/&(?!amp;)(?:[a-z]{2,16}|#\d{1,8}|#x[0-9a-f]{1,8});/iu';
 
     private const string CLASS_QUOTE_BROKEN = 'post-quote-broken';
     private const string CLASS_QUOTE_LINK = 'post-quote-link';
@@ -22,6 +25,7 @@ class PostFormatter
             $trimmed = ltrim($line);
             $isGreentext = str_starts_with($trimmed, '&gt;') && ! str_starts_with($trimmed, '&gt;&gt;');
 
+            $line = $this->applyExternalLinks($line);
             $line = $this->applyQuoteLinks($line, $quoteResolver);
 
             if ($isGreentext) {
@@ -85,6 +89,30 @@ class PostFormatter
         }, $line) ?? $line;
 
         return $line;
+    }
+
+    private function applyExternalLinks(string $line): string
+    {
+        return preg_replace_callback(self::EXTERNAL_URL_PATTERN, static function (array $matches): string {
+            $raw = (string) ($matches[0] ?? '');
+            if ($raw === '') {
+                return $raw;
+            }
+
+            $url = rtrim($raw, self::EXTERNAL_URL_TRAILING_TRIM_CHARS);
+            $suffix = substr($raw, strlen($url));
+            if (preg_match(self::NON_URL_ENTITY_PATTERN, $url, $entityMatch, PREG_OFFSET_CAPTURE) === 1) {
+                $offset = (int) $entityMatch[0][1];
+                $suffix = substr($url, $offset).$suffix;
+                $url = substr($url, 0, $offset);
+            }
+
+            if ($url === '') {
+                return $raw;
+            }
+
+            return '<a href="'.$url.'" target="_blank" rel="noopener noreferrer nofollow">'.$url.'</a>'.$suffix;
+        }, $line) ?? $line;
     }
 
     private function applyWrappedMarkup(string $line, string $pattern, string $delimiter, string $tag, ?string $class = null): string

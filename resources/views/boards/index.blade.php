@@ -78,8 +78,12 @@
                         @error('use_display_name')<div class="error">{{ $message }}</div>@enderror
                     </div>
                     <div>
-                        <label for="images">{{ __('ui.image_optional') }}</label>
-                        <input id="images" name="images[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                        <label for="thread-images">{{ __('ui.image_optional') }}</label>
+                        <div class="file-picker">
+                            <input id="thread-images" class="file-input-native" name="images[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                            <label for="thread-images" class="button secondary">{{ __('ui.choose_files') }}</label>
+                            <span class="muted file-picker-hint">{{ __('ui.file_picker_hint') }}</span>
+                        </div>
                         <label class="row" style="gap:.45rem; align-items:center; margin-top:.45rem;">
                             <input type="checkbox" name="strip_metadata" value="1" style="width:auto;" {{ old('strip_metadata') ? 'checked' : '' }}>
                             <span>{{ __('ui.strip_metadata') }}</span>
